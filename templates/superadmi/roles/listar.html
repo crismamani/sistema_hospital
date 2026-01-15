@@ -1,0 +1,20 @@
+{% extends 'superadmi/base.html' %}
+{% block content %}
+<h2>Gestión de Roles</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nombre del Rol</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for rol in roles %}
+        <tr>
+            <td>{{ rol.id }}</td>
+            <td>{{ rol.nombre }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

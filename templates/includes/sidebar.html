@@ -1,0 +1,27 @@
+<div class="sidebar">
+    <a href="{% url 'perfil' %}" class="nav-link">Mi Perfil</a>
+
+    {% if request.user.rol.nombre == 'SUPERADMI' %}
+    <div class="menu-label">CONTROL GLOBAL</div>
+    <a href="{% url 'superadmin:listar_hospitales' %}" class="nav-link">Gestionar Hospitales</a>
+    <a href="{% url 'superadmin:listar_usuarios' %}" class="nav-link">Cuentas de Personal</a>
+    {% endif %}
+
+    {% if request.user.rol.nombre == 'ADMIN_APP' %}
+    <div class="menu-label">GESTIÓN HOSPITAL</div>
+    <a href="#" class="nav-link">Mi Personal</a>
+    <a href="#" class="nav-link">Reportes Internos</a>
+    {% endif %}
+
+    {% if request.user.rol.nombre == 'Doctor' %}
+    <div class="menu-label">CLÍNICA</div>
+    <a href="#" class="nav-link">Agenda del Día</a>
+    <a href="#" class="nav-link">Pacientes en Espera</a>
+    {% endif %}
+
+    {% if request.user.rol.nombre == 'Enfermera' %}
+    <div class="menu-label">ASISTENCIA</div>
+    <a href="#" class="nav-link">Triaje / Signos Vitales</a>
+    <a href="#" class="nav-link">Admisión de Pacientes</a>
+    {% endif %}
+</div>

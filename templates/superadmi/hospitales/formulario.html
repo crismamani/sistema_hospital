@@ -1,0 +1,41 @@
+{% extends 'superadmi/base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-12">
+        <div class="sparkline12-list shadow-reset mg-t-30" style="background: #152036; padding: 20px;">
+            <div class="sparkline12-hd">
+                <h1 style="color: white;">Registrar Nuevo Hospital</h1>
+            </div>
+            
+            <div class="sparkline12-graph">
+                <form method="POST" style="color: white; text-align: left;">
+                    {% csrf_token %}
+                    
+                    {% if form.errors %}
+                        <div class="alert alert-danger" style="background: white; color: red; padding: 10px; margin-bottom: 20px;">
+                            <strong>Por favor corrige los siguientes errores:</strong>
+                            {{ form.errors }}
+                        </div>
+                    {% endif %}
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            {% for field in form %}
+                                <div class="form-group mt-3">
+                                    <label>{{ field.label }}</label>
+                                    {{ field }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-success mt-4" style="width: 200px;">
+                        <i class="fa fa-save"></i> Guardar Hospital
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

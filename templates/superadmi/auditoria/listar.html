@@ -1,0 +1,54 @@
+{% extends 'superadmi/base.html' %}
+
+{% block content %}
+<div class="container-fluid py-4" style="background: #f4f7fa; min-height: 100vh;">
+    <div class="card border-0 shadow-sm" style="border-radius: 15px; background: white;">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 style="color: #33475b; font-weight: 700; margin: 0;">
+                    <i class="fas fa-history me-2" style="color: #ff9800;"></i> Kardex de Auditoría
+                </h2>
+                <span class="badge rounded-pill" style="background: #eef2ff; color: #4e73df; padding: 10px 20px; font-weight: 600;">
+                    Registro de Movimientos
+                </span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr style="background: #f8fafd; border-bottom: 2px solid #f0f2f5;">
+                            <th class="p-3 text-muted small text-uppercase fw-bold">Fecha y Hora</th>
+                            <th class="p-3 text-muted small text-uppercase fw-bold">Usuario</th>
+                            <th class="p-3 text-muted small text-uppercase fw-bold">Acción</th>
+                            <th class="p-3 text-muted small text-uppercase fw-bold">Módulo</th>
+                            <th class="p-3 text-muted small text-uppercase fw-bold">Detalles</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in auditoria_entries %}
+                        <tr style="border-bottom: 1px solid #f0f2f5;">
+                            <td class="p-3 text-muted">{{ log.fecha_accion|date:"d/m/Y H:i" }}</td>
+                            <td class="p-3 fw-bold" style="color: #33475b;">{{ log.usuario.username|default:"Sistema" }}</td>
+                            <td class="p-3">
+                                <span class="badge px-3 py-2" style="font-size: 11px; font-weight: 800;
+                                    {% if log.accion == 'CREAR' %} background: #e6fffa; color: #008d7d;
+                                    {% elif log.accion == 'ELIMINAR' %} background: #fff5f5; color: #e53e3e;
+                                    {% else %} background #eef2ff color #4e73df; {% endif %}">
+                                    {{ log.accion }}
+                                </span>
+                            </td>
+                            <td class="p-3 fw-semibold text-dark">{{ log.tabla_afectada }}</td>
+                            <td class="p-3 text-muted"><small>{{ log.detalles|truncatechars:80 }}</small></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">No hay registros de auditoría disponibles.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

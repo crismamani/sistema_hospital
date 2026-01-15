@@ -1,370 +1,343 @@
-
-## 1. VIEWS DE SUPERADMIN (views/superadmin.py)
-# views/superadmin.py
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Q, Count
-from django.http import JsonResponse
-from django.utils import timezone
+from django.db.models import Q, Sum
+from django.core.paginator import Paginator
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 
+# Importación de modelos y formularios
 from .models import (
     Hospital, Usuario, Rol, Especialidad,
-    HospitalEspecialidad, Auditoria, ConfiguracionSistema, Reporte
+    HospitalEspecialidad, Auditoria, ConfiguracionSistema
 )
+from hospital.models import Paciente, Cama
+
 from .forms import (
-    HospitalForm, UsuarioForm, RolForm, EspecialidadForm,
-    HospitalEspecialidadForm, ConfiguracionSistemaForm, ReporteForm,
-    FiltroAuditoriaForm
+    LoginForm, HospitalForm, UsuarioForm, RolForm, EspecialidadForm,
+    ConfiguracionSistemaForm, RegistroPersonalForm, AsignarCapacidadForm, PacienteForm
 )
 
-# C:\Users\cris\Sis_Hospital\superadmi\views.py
+# =================================================================
+# --- VISTAS DE ACCESO (LOGIN/LOGOUT) ---
+# =================================================================
 
-from django.shortcuts import render
-# ... otras importaciones
-
-# Define la vista que el sistema está buscando
 def login_view(request):
-    # Por ahora, solo devuelve una respuesta HTTP simple o una plantilla vacía
-    # Más tarde, aquí irá la lógica de autenticación
-    return render(request, 'login.html') 
-    # O, si no tienes la plantilla aún:
-    # from django.http import HttpResponse
-    # return HttpResponse("Página de Login Temporal")
+    if request.user.is_authenticated:
+        return dashboard_redirect(request)
 
-def verificar_superadmin(user):
-    """Verificar que el usuario es superadmin"""
-    return user.is_authenticated and user.rol.nivel_acceso == 1
+    if request.method == 'POST':
+        u = request.POST.get('username')
+        p = request.POST.get('password')
+        user = authenticate(request, username=u, password=p)
+        
+        if user is not None:
+            if user.is_active:
+                login(request, user) 
+                messages.success(request, f"Bienvenido, {user.nombre_completo}")
+                return dashboard_redirect(request)
+            else:
+                messages.warning(request, "Tu cuenta se encuentra inactiva.")
+        else:
+            messages.error(request, "Correo o contraseña incorrectos")
+            
+    return render(request, 'superadmi/login.html')
 
 @login_required
+def dashboard_redirect(request):
+    if not request.user.rol:
+        logout(request)
+        return redirect('superadmin:login')
+        
+    rol = request.user.rol.nombre.upper()
+    if 'SUPERADMIN' in rol:
+        return redirect('superadmin:dashboard_superadmin')
+    elif 'DOCTOR' in rol:
+        return redirect('doctor:dashboard_doctor')
+    elif 'ENFERMERA' in rol:
+        return redirect('enfermeria:dashboard_enfermera')
+    elif 'ADMIN_APP' in rol:
+        return redirect('admin_app:dashboard')
+    
+    return redirect('superadmin:dashboard_superadmin')
+
+def logout_view(request):
+    logout(request)
+    messages.success(request, "Sesión cerrada correctamente.")
+    return redirect('superadmin:login')
+
+# =================================================================
+# --- DASHBOARD PRINCIPAL ---
+# =================================================================
+
+@login_required(login_url='superadmin:login')
 def dashboard_superadmin(request):
-    """Dashboard principal del superadmin"""
-    if not verificar_superadmin(request.user):
-        messages.error(request, 'No tienes permisos para acceder a esta sección')
-        return redirect('login')
-    
-    # Estadísticas generales
-    total_hospitales = Hospital.objects.filter(estado=True).count()
-    total_usuarios = Usuario.objects.filter(estado=True).count()
-    total_especialidades = Especialidad.objects.filter(estado=True).count()
-    
-    # Actividad reciente
-    actividad_reciente = Auditoria.objects.all().order_by('-fecha_accion')[:10]
-    
+    user = request.user
+    rol = user.rol.nombre.upper() if user.rol else "SIN ROL"
+
+    if rol == 'SUPERADMIN':
+        usuarios_qs = Usuario.objects.all()
+        pacientes_qs = Paciente.objects.all()
+        camas_qs = Cama.objects.all()
+        hospitales_qs = Hospital.objects.all()
+    else:
+        usuarios_qs = Usuario.objects.filter(hospital=user.hospital)
+        pacientes_qs = Paciente.objects.filter(hospital=user.hospital)
+        camas_qs = Cama.objects.filter(hospital=user.hospital)
+        hospitales_qs = Hospital.objects.filter(id=user.hospital.id) if user.hospital else Hospital.objects.none()
+
     context = {
-        'total_hospitales': total_hospitales,
-        'total_usuarios': total_usuarios,
-        'total_especialidades': total_especialidades,
-        'actividad_reciente': actividad_reciente,
+        'total_hospitales': hospitales_qs.count(),
+        'total_usuarios': usuarios_qs.count(),
+        'total_pacientes': pacientes_qs.count(),
+        'camas_libres': camas_qs.filter(estado='LIBRE').count(),
+        'camas_ocupadas': camas_qs.filter(estado='OCUPADO').count(),
+        'nombre_admin': user.nombre_completo,
+        'rol_usuario': rol,
+        'hospital_usuario': user.hospital.nombre if user.hospital else "Sede Central (Global)"
     }
-    
-    return render(request, 'superadmin/dashboard.html', context)
+    return render(request, 'superadmi/dashboard.html', context)
 
-# ========== GESTIÓN DE HOSPITALES ==========
+# =================================================================
+# --- GESTIÓN DE HOSPITALES ---
+# =================================================================
 
-@login_required
+@login_required(login_url='superadmin:login')
 def listar_hospitales(request):
-    """Listar todos los hospitales"""
-    if not verificar_superadmin(request.user):
-        return redirect('login')
-    
-    hospitales = Hospital.objects.all().order_by('nombre')
-    return render(request, 'superadmin/hospitales/listar.html', {'hospitales': hospitales})
-
-@login_required
-def crear_hospital(request):
-    """Crear nuevo hospital"""
-    if not verificar_superadmin(request.user):
-        return redirect('login')
-    
-    if request.method == 'POST':
-        form = HospitalForm(request.POST)
-        if form.is_valid():
-            hospital = form.save()
-            
-            # Registrar en auditoría
-            Auditoria.objects.create(
-                usuario=request.user,
-                accion='crear',
-                tabla_afectada='hospitales',
-                registro_id=hospital.id,
-                datos_nuevos={'nombre': hospital.nombre}
-            )
-            
-            messages.success(request, 'Hospital creado exitosamente')
-            return redirect('superadmin:listar_hospitales')
-    else:
-        form = HospitalForm()
-    
-    return render(request, 'superadmin/hospitales/formulario.html', {'form': form})
-
-@login_required
-def editar_hospital(request, pk):
-    """Editar hospital existente"""
-    if not verificar_superadmin(request.user):
-        return redirect('login')
-    
-    hospital = get_object_or_404(Hospital, pk=pk)
-    
-    if request.method == 'POST':
-        form = HospitalForm(request.POST, instance=hospital)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Hospital actualizado exitosamente')
-            return redirect('superadmin:listar_hospitales')
-    else:
-        form = HospitalForm(instance=hospital)
-    
-    return render(request, 'superadmin/hospitales/formulario.html', {
-        'form': form,
-        'hospital': hospital
-    })
-
-@login_required
-def detalle_hospital(request, pk):
-    """Ver detalles de un hospital"""
-    if not verificar_superadmin(request.user):
-        return redirect('login')
-    
-    hospital = get_object_or_404(Hospital, pk=pk)
-    especialidades = HospitalEspecialidad.objects.filter(hospital=hospital)
-    usuarios = Usuario.objects.filter(hospital=hospital)
-    
+    hospitales_db = Hospital.objects.all().order_by('-id')
     context = {
-        'hospital': hospital,
-        'especialidades': especialidades,
-        'usuarios': usuarios,
+        'hospitales': hospitales_db, 
+        'form': HospitalForm(),
+        'total_h': hospitales_db.count(),
+        'total_c': hospitales_db.aggregate(Sum('capacidad_camas'))['capacidad_camas__sum'] or 0
     }
-    
-    return render(request, 'superadmin/hospitales/detalle.html', context)
+    return render(request, 'superadmi/hospitales/listar.html', context)
 
-# ========== GESTIÓN DE USUARIOS ==========
-
-@login_required
-def listar_usuarios(request):
-    """Listar todos los usuarios"""
-    if not verificar_superadmin(request.user):
-        return redirect('login')
-    
-    usuarios = Usuario.objects.all().select_related('rol', 'hospital').order_by('nombre_completo')
-    return render(request, 'superadmin/usuarios/listar.html', {'usuarios': usuarios})
-
-@login_required
-def crear_usuario(request):
-    """Crear nuevo usuario"""
-    if not verificar_superadmin(request.user):
-        return redirect('login')
-    
+def crear_hospital(request):
     if request.method == 'POST':
-        form = UsuarioForm(request.POST)
-        if form.is_valid():
-            usuario = form.save()
-            messages.success(request, f'Usuario {usuario.nombre_completo} creado exitosamente')
-            return redirect('superadmin:listar_usuarios')
-    else:
-        form = UsuarioForm()
-    
-    return render(request, 'superadmin/usuarios/formulario.html', {'form': form})
+        h = Hospital()
+        h.nombre = request.POST.get('nombre')
+        h.direccion = request.POST.get('direccion')
+        h.telefono = request.POST.get('telefono')
+        h.email = request.POST.get('email')
+        camas = request.POST.get('capacidad_camas')
+        h.capacidad_camas = int(camas) if camas and camas.isdigit() else 0
+        h.estado = True 
+        h.save()
+        messages.success(request, f"¡{h.nombre} registrado con éxito!")
+    return redirect('superadmin:listar_hospitales')
 
-@login_required
+def editar_hospital(request, pk):
+    h = get_object_or_404(Hospital, id=pk)
+    if request.method == 'POST':
+        h.nombre = request.POST.get('nombre')
+        h.direccion = request.POST.get('direccion')
+        h.telefono = request.POST.get('telefono')
+        h.email = request.POST.get('email')
+        camas = request.POST.get('capacidad_camas')
+        h.capacidad_camas = int(camas) if camas else 0
+        estado_web = request.POST.get('estado')
+        h.estado = (estado_web == 'True')
+        h.save()
+        messages.success(request, "Cambios guardados correctamente.")
+    return redirect('superadmin:listar_hospitales')
+
+def eliminar_hospital(request, pk):
+    if request.method == 'POST':
+        hospital = get_object_or_404(Hospital, id=pk)
+        nombre = hospital.nombre
+        hospital.delete()
+        messages.success(request, f"El hospital {nombre} fue eliminado correctamente.")
+    return redirect('superadmin:listar_hospitales')
+
+# =================================================================
+# --- GESTIÓN DE USUARIOS ---
+# =================================================================
+@login_required(login_url='superadmin:login')
+def listar_usuarios(request):
+    usuarios = Usuario.objects.all().order_by('-id')
+    # Preparamos todo lo que necesitan los modales
+    context = {
+        'usuarios': usuarios,
+        'roles': Rol.objects.all(),
+        'hospitales': Hospital.objects.all(),
+        'especialidades': Especialidad.objects.all(),
+        'form': RegistroPersonalForm()
+    }
+    return render(request, 'superadmi/usuarios/listar.html', context)
+
+@login_required(login_url='superadmin:login')
+def registrar_personal(request):
+    if request.method == 'POST':
+        form = RegistroPersonalForm(request.POST)
+        if form.is_valid():
+            usuario = form.save(commit=False)
+            usuario.set_password(form.cleaned_data['password'])
+            usuario.save()
+            messages.success(request, f"Usuario {usuario.username} creado con éxito.")
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"Error en {field}: {error}")
+    return redirect('superadmin:listar_usuarios')
+
+@login_required(login_url='superadmin:login')
 def editar_usuario(request, pk):
-    """Editar usuario existente"""
-    if not verificar_superadmin(request.user):
-        return redirect('login')
-    
     usuario = get_object_or_404(Usuario, pk=pk)
-    
     if request.method == 'POST':
         form = UsuarioForm(request.POST, instance=usuario)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Usuario actualizado exitosamente')
-            return redirect('superadmin:listar_usuarios')
-    else:
-        form = UsuarioForm(instance=usuario)
-    
-    return render(request, 'superadmin/usuarios/formulario.html', {
-        'form': form,
-        'usuario': usuario
-    })
+            messages.success(request, "Usuario actualizado correctamente.")
+        else:
+            messages.error(request, "Error al actualizar el usuario.")
+    return redirect('superadmin:listar_usuarios')
 
-# ========== GESTIÓN DE ROLES ==========
+@login_required(login_url='superadmin:login')
+def eliminar_usuario(request, pk):
+    # Nota: Si usas el botón directo en el HTML, cámbialo a POST
+    usuario = get_object_or_404(Usuario, pk=pk)
+    email = usuario.email
+    Auditoria.objects.create(
+        usuario=request.user,
+        accion="ELIMINACION",
+        detalles=f"Eliminó al usuario: {email}",
+        tabla_afectada="Usuario"
+    )
+    usuario.delete()
+    messages.success(request, "Usuario eliminado.")
+    return redirect('superadmin:listar_usuarios')
+# =================================================================
+# --- CAPACIDADES Y ESPECIALIDADES ---
+# =================================================================
 
-@login_required
-def listar_roles(request):
-    """Listar roles del sistema"""
-    if not verificar_superadmin(request.user):
-        return redirect('login')
-    
-    roles = Rol.objects.all().order_by('nivel_acceso')
-    return render(request, 'superadmin/roles/listar.html', {'roles': roles})
+@login_required(login_url='superadmin:login')
+def listar_capacidades(request):
+    capacidades = HospitalEspecialidad.objects.all().select_related('hospital', 'especialidad')
+    return render(request, 'superadmi/capacidades/listar.html', {'capacidades': capacidades})
 
-@login_required
-def crear_rol(request):
-    """Crear nuevo rol"""
-    if not verificar_superadmin(request.user):
-        return redirect('login')
-    
+@login_required(login_url='superadmin:login')
+def asignar_capacidad(request):
     if request.method == 'POST':
-        form = RolForm(request.POST)
+        form = AsignarCapacidadForm(request.POST)
         if form.is_valid():
-            form.save()
-            messages.success(request, 'Rol creado exitosamente')
-            return redirect('superadmin:listar_roles')
+            capacidad_asignada = form.save(commit=False)
+            hospital = capacidad_asignada.hospital
+            camas_ya_usadas = HospitalEspecialidad.objects.filter(hospital=hospital).aggregate(total=Sum('capacidad_camas'))['total'] or 0
+            disponible = hospital.capacidad_camas - camas_ya_usadas
+            
+            if capacidad_asignada.capacidad_camas > disponible:
+                messages.error(request, f"Error: Solo quedan {disponible} camas disponibles en este hospital.")
+            else:
+                capacidad_asignada.save()
+                messages.success(request, "Capacidad asignada correctamente.")
+                return redirect('superadmin:listar_capacidades')
     else:
-        form = RolForm()
-    
-    return render(request, 'superadmin/roles/formulario.html', {'form': form})
+        form = AsignarCapacidadForm()
+    return render(request, 'superadmi/asignar_capacidad.html', {'form': form})
 
-# ========== GESTIÓN DE ESPECIALIDADES ==========
+@login_required(login_url='superadmin:login')
+def editar_capacidad(request, pk):
+    capacidad = get_object_or_404(HospitalEspecialidad, pk=pk)
+    if request.method == 'POST':
+        form = AsignarCapacidadForm(request.POST, instance=capacidad)
+        if form.is_valid():
+            nueva_capacidad = form.save(commit=False)
+            hospital = nueva_capacidad.hospital
+            camas_otras = HospitalEspecialidad.objects.filter(hospital=hospital).exclude(pk=pk).aggregate(total=Sum('capacidad_camas'))['total'] or 0
+            disponible = hospital.capacidad_camas - camas_otras
+            
+            if nueva_capacidad.capacidad_camas > disponible:
+                messages.error(request, f"Excedido. El hospital solo tiene {disponible} camas libres.")
+            else:
+                nueva_capacidad.save()
+                messages.success(request, "Capacidad actualizada.")
+                return redirect('superadmin:listar_capacidades')
+    else:
+        form = AsignarCapacidadForm(instance=capacidad)
+    return render(request, 'superadmi/capacidades/editar.html', {'form': form})
 
-@login_required
+@login_required(login_url='superadmin:login')
+def listar_roles(request):
+    roles = Rol.objects.all().order_by('nombre')
+    return render(request, 'superadmi/roles/listar.html', {'roles': roles})
+
+@login_required(login_url='superadmin:login')
 def listar_especialidades(request):
-    """Listar especialidades médicas"""
-    if not verificar_superadmin(request.user):
-        return redirect('login')
-    
-    especialidades = Especialidad.objects.all().order_by('nombre')
-    return render(request, 'superadmin/especialidades/listar.html', {'especialidades': especialidades})
-
-@login_required
-def crear_especialidad(request):
-    """Crear nueva especialidad"""
-    if not verificar_superadmin(request.user):
-        return redirect('login')
-    
     if request.method == 'POST':
         form = EspecialidadForm(request.POST)
         if form.is_valid():
-            especialidad = form.save(commit=False)
-            especialidad.creado_por = request.user
-            especialidad.save()
-            messages.success(request, 'Especialidad creada exitosamente')
+            form.save()
+            messages.success(request, 'Especialidad creada.')
             return redirect('superadmin:listar_especialidades')
-    else:
-        form = EspecialidadForm()
-    
-    return render(request, 'superadmin/especialidades/formulario.html', {'form': form})
+    especialidades = Especialidad.objects.all().order_by('nombre')
+    return render(request, 'superadmi/especialidades/listar.html', {'especialidades': especialidades, 'form': EspecialidadForm()})
 
-# ========== ASIGNACIÓN DE ESPECIALIDADES A HOSPITALES ==========
-
-@login_required
-def asignar_especialidad_hospital(request):
-    """Asignar especialidad a hospital"""
-    if not verificar_superadmin(request.user):
-        return redirect('login')
-    
+@login_required(login_url='superadmin:login')
+def crear_especialidad(request):
     if request.method == 'POST':
-        form = HospitalEspecialidadForm(request.POST)
+        form = EspecialidadForm(request.POST)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Especialidad asignada exitosamente')
-            return redirect('superadmin:listar_hospitales')
+            messages.success(request, "Nueva especialidad agregada.")
+            return redirect('superadmin:listar_especialidades')
+    return redirect('superadmin:listar_especialidades')
+
+# =================================================================
+# --- PACIENTES Y CAMAS ---
+# =================================================================
+
+@login_required(login_url='superadmin:login')
+def listar_pacientes(request):
+    pacientes = Paciente.objects.all().select_related('hospital', 'cama_asignada').order_by('-fecha_registro')
+    if request.method == 'POST':
+        form = PacienteForm(request.POST)
+        if form.is_valid():
+            paciente = form.save(commit=False)
+            if paciente.cama_asignada:
+                cama = paciente.cama_asignada
+                cama.estado = 'OCUPADO'
+                cama.save()
+            paciente.save()
+            messages.success(request, "Paciente registrado correctamente.")
+            return redirect('superadmin:listar_pacientes')
     else:
-        form = HospitalEspecialidadForm()
-    
-    return render(request, 'superadmin/hospital_especialidades/formulario.html', {'form': form})
+        form = PacienteForm()
+    return render(request, 'superadmi/pacientes/listar.html', {'pacientes': pacientes, 'form': form})
 
-# ========== AUDITORÍA ==========
+@login_required(login_url='superadmin:login')
+def crear_camas_prueba(request):
+    hospital = Hospital.objects.first()
+    if hospital:
+        for i in range(1, 11):
+            Cama.objects.get_or_create(
+                numero=f"C-PRUEBA-{i}",
+                hospital=hospital,
+                defaults={'piso': 'Piso 1', 'estado': 'LIBRE'}
+            )
+        messages.success(request, f"10 Camas de prueba creadas.")
+    return redirect('superadmin:dashboard_superadmin')
 
-@login_required
+# =================================================================
+# --- AUDITORIA Y CONFIGURACIÓN ---
+# =================================================================
+
+@login_required(login_url='superadmin:login')
 def auditoria(request):
-    """Ver registros de auditoría"""
-    if not verificar_superadmin(request.user):
-        return redirect('login')
-    
-    registros = Auditoria.objects.all().select_related('usuario').order_by('-fecha_accion')
-    
-    # Aplicar filtros
-    form = FiltroAuditoriaForm(request.GET)
-    if form.is_valid():
-        if form.cleaned_data.get('usuario'):
-            registros = registros.filter(usuario=form.cleaned_data['usuario'])
-        if form.cleaned_data.get('accion'):
-            registros = registros.filter(accion=form.cleaned_data['accion'])
-        if form.cleaned_data.get('fecha_desde'):
-            registros = registros.filter(fecha_accion__gte=form.cleaned_data['fecha_desde'])
-        if form.cleaned_data.get('fecha_hasta'):
-            registros = registros.filter(fecha_accion__lte=form.cleaned_data['fecha_hasta'])
-    
-    # Paginación
-    from django.core.paginator import Paginator
-    paginator = Paginator(registros, 50)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    
-    context = {
-        'registros': page_obj,
-        'form': form,
-    }
-    
-    return render(request, 'superadmin/auditoria/listar.html', context)
+    log_list = Auditoria.objects.select_related('usuario').all().order_by('-fecha_accion')
+    paginator = Paginator(log_list, 20)
+    page = request.GET.get('page')
+    entries = paginator.get_page(page)
+    return render(request, 'superadmi/auditoria/listar.html', {'auditoria_entries': entries})
 
-# ========== CONFIGURACIÓN DEL SISTEMA ==========
-
-@login_required
+@login_required(login_url='superadmin:login')
 def configuracion_sistema(request):
-    """Gestionar configuración del sistema"""
-    if not verificar_superadmin(request.user):
-        return redirect('login')
-    
-    configuraciones = ConfiguracionSistema.objects.all().order_by('clave')
-    return render(request, 'superadmin/configuracion/listar.html', {'configuraciones': configuraciones})
-
-@login_required
-def editar_configuracion(request, pk):
-    """Editar configuración"""
-    if not verificar_superadmin(request.user):
-        return redirect('login')
-    
-    config = get_object_or_404(ConfiguracionSistema, pk=pk)
-    
+    config, _ = ConfiguracionSistema.objects.get_or_create(pk=1)
     if request.method == 'POST':
         form = ConfiguracionSistemaForm(request.POST, instance=config)
         if form.is_valid():
-            config = form.save(commit=False)
-            config.actualizado_por = request.user
-            config.save()
-            messages.success(request, 'Configuración actualizada')
+            form.save()
+            messages.success(request, 'Configuración actualizada.')
             return redirect('superadmin:configuracion_sistema')
     else:
         form = ConfiguracionSistemaForm(instance=config)
-    
-    return render(request, 'superadmin/configuracion/formulario.html', {
-        'form': form,
-        'config': config
-    })
-
-# ========== REPORTES ==========
-
-@login_required
-def generar_reporte(request):
-    """Generar reportes del sistema"""
-    if not verificar_superadmin(request.user):
-        return redirect('login')
-    
-    if request.method == 'POST':
-        form = ReporteForm(request.POST)
-        if form.is_valid():
-            reporte = form.save(commit=False)
-            reporte.generado_por = request.user
-            
-            # Aquí iría la lógica para generar el reporte según el tipo
-            # Por ahora solo guardamos el registro
-            reporte.save()
-            
-            messages.success(request, 'Reporte generado exitosamente')
-            return redirect('superadmin:ver_reporte', pk=reporte.id)
-    else:
-        form = ReporteForm()
-    
-    return render(request, 'superadmin/reportes/formulario.html', {'form': form})
-
-@login_required
-def listar_reportes(request):
-    """Listar reportes generados"""
-    if not verificar_superadmin(request.user):
-        return redirect('login')
-    
-    reportes = Reporte.objects.all().order_by('-fecha_generacion')
-    return render(request, 'superadmin/reportes/listar.html', {'reportes': reportes})
+    return render(request, 'superadmi/configuracion/formulario.html', {'form': form})

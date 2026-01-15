@@ -1,30 +1,44 @@
-# superadmi/urls.py
 from django.urls import path
-from . import views  # Importa las vistas de la misma carpeta
+from . import views
 
-app_name = 'superadmin'  # Namespace para usar en templates: {% url 'superadmin:dashboard' %}
+app_name = 'superadmin'
 
 urlpatterns = [
-    path('', views.dashboard_superadmin, name='dashboard'),
+    # Autenticación
+    path('login/', views.login_view, name='login'),
+    path('logout/', views.logout_view, name='logout'),
+    
+    # Dashboard Principal
+    path('', views.dashboard_superadmin, name='dashboard_superadmin'),
+    path('redirect/', views.dashboard_redirect, name='dashboard_redirect'),
     
     # Hospitales
     path('hospitales/', views.listar_hospitales, name='listar_hospitales'),
     path('hospitales/crear/', views.crear_hospital, name='crear_hospital'),
     path('hospitales/editar/<int:pk>/', views.editar_hospital, name='editar_hospital'),
-    path('hospitales/detalle/<int:pk>/', views.detalle_hospital, name='detalle_hospital'),
+    path('hospitales/eliminar/<int:pk>/', views.eliminar_hospital, name='eliminar_hospital'),
     
     # Usuarios
     path('usuarios/', views.listar_usuarios, name='listar_usuarios'),
-    path('usuarios/crear/', views.crear_usuario, name='crear_usuario'),
+    path('usuarios/registrar/', views.registrar_personal, name='registrar_personal'),
     path('usuarios/editar/<int:pk>/', views.editar_usuario, name='editar_usuario'),
+    path('usuarios/eliminar/<int:pk>/', views.eliminar_usuario, name='eliminar_usuario'),
     
     # Roles y Especialidades
     path('roles/', views.listar_roles, name='listar_roles'),
-    path('roles/crear/', views.crear_rol, name='crear_rol'),
     path('especialidades/', views.listar_especialidades, name='listar_especialidades'),
     path('especialidades/crear/', views.crear_especialidad, name='crear_especialidad'),
     
-    # Auditoría y Config
+    # Auditoría y Configuración
     path('auditoria/', views.auditoria, name='auditoria'),
     path('configuracion/', views.configuracion_sistema, name='configuracion_sistema'),
+
+    # Pacientes y Camas
+    path('pacientes/', views.listar_pacientes, name='listar_pacientes'),
+    path('crear-camas-prueba/', views.crear_camas_prueba, name='crear_camas_prueba'),
+    
+    # Gestión de Capacidades (HospitalEspecialidad)
+    path('capacidades/', views.listar_capacidades, name='listar_capacidades'),
+    path('capacidades/asignar/', views.asignar_capacidad, name='asignar_capacidad'),
+    path('capacidades/editar/<int:pk>/', views.editar_capacidad, name='editar_capacidad'),
 ]

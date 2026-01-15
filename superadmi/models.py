@@ -1,15 +1,35 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser # Opcional: para usar un modelo de usuario más robusto
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 
-# ==============================================================
-# 1. TABLAS DE CATÁLOGOS Y ESTRUCTURA CORE (Solo SuperAdmin)
-# ==============================================================
+# --- MANAGER DE USUARIOS ---
+class UsuarioManager(BaseUserManager):
+    def create_user(self, username, email, nombre_completo, password=None, **extra_fields):
+        if not username:
+            raise ValueError('El nombre de usuario es obligatorio')
+        if not email:
+            raise ValueError('El email es obligatorio')
+        
+        email = self.normalize_email(email)
+        user = self.model(
+            username=username, 
+            email=email, 
+            nombre_completo=nombre_completo,
+            **extra_fields
+        )
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, username, email, nombre_completo, password=None, **extra_fields):
+        extra_fields.setdefault('is_admin', True)
+        # El superusuario se crea sin rol inicial porque la tabla de roles suele estar vacía
+        return self.create_user(username, email, nombre_completo, password, **extra_fields)
+
+# --- TABLAS DE CATÁLOGOS ---
 
 class Rol(models.Model):
-    '''Catálogo de roles del sistema'''
     nombre = models.CharField(max_length=50, unique=True)
-    descripcion = models.TextField()
-    # 1=superadmin, 2=admin, 3=doctor, 4=enfermera, etc.
+    descripcion = models.TextField(null=True, blank=True)
     nivel_acceso = models.IntegerField(default=5) 
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     
@@ -22,22 +42,30 @@ class Rol(models.Model):
         verbose_name_plural = 'Roles'
 
 
+class Hospital(models.Model):
+    nombre = models.CharField(max_length=200)
+    direccion = models.TextField()
+    telefono = models.CharField(max_length=20, null=True, blank=True)
+    email = models.EmailField(max_length=100, null=True, blank=True)
+    capacidad_camas = models.IntegerField(default=0) 
+    estado = models.BooleanField(default=True)
+
 class Especialidad(models.Model):
-    '''Catálogo global de especialidades médicas'''
     nombre = models.CharField(max_length=100)
     descripcion = models.TextField(null=True, blank=True)
-    codigo = models.CharField(max_length=20, unique=True)
+    codigo = models.CharField(max_length=20, unique=True, null=True, blank=True)
     estado = models.BooleanField(default=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
-    # Referencia forward a 'Usuario', se define después
+    
+    # Referencia a Usuario (se usa string 'Usuario' porque se define abajo)
     creado_por = models.ForeignKey(
         'Usuario', 
         on_delete=models.SET_NULL, 
         null=True, 
         blank=True,
-        # AÑADE el related_name aquí para resolver el conflicto E303
         related_name='especialidades_creadas' 
     )
+
     def __str__(self):
         return self.nombre
 
@@ -45,78 +73,69 @@ class Especialidad(models.Model):
         db_table = 'especialidades'
         verbose_name = 'Especialidad'
         verbose_name_plural = 'Especialidades'
-
-
-class Hospital(models.Model):
-    '''Gestión de hospitales del sistema'''
-    nombre = models.CharField(max_length=200)
-    direccion = models.TextField()
-    telefono = models.CharField(max_length=20, null=True, blank=True)
-    email = models.CharField(max_length=100, null=True, blank=True)
-    capacidad_total = models.IntegerField(default=0)
+class HospitalEspecialidad(models.Model):
+    hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE, related_name='especialidades_asignadas')
+    especialidad = models.ForeignKey(Especialidad, on_delete=models.CASCADE)
+    # Aquí es donde vive la capacidad específica que querías
+    capacidad_camas = models.IntegerField(default=0) 
     estado = models.BooleanField(default=True)
-    fecha_registro = models.DateTimeField(auto_now_add=True)
-    fecha_actualizacion = models.DateTimeField(auto_now=True)
-    
-    def __str__(self):
-        return self.nombre
+    fecha_asignacion = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = 'hospitales'
-        verbose_name = 'Hospital'
-        verbose_name_plural = 'Hospitales'
+        db_table = 'hospital_especialidades'
+        unique_together = ('hospital', 'especialidad')
 
+# --- MODELO DE USUARIO PERSONALIZADO ---
 
-class Usuario(models.Model): 
-    '''Todos los usuarios del sistema (Se recomienda User model de Django, pero se usa este por el diseño)'''
+class Usuario(AbstractBaseUser):
+    username = models.CharField(max_length=50, unique=True)
     nombre_completo = models.CharField(max_length=200)
-    email = models.CharField(max_length=100, unique=True)
-    password_hash = models.CharField(max_length=255)
+    email = models.EmailField(max_length=100, unique=True)
     telefono = models.CharField(max_length=20, null=True, blank=True)
-    rol = models.ForeignKey(Rol, on_delete=models.PROTECT) # Evita borrar roles si tienen usuarios
+    
+    # Relaciones con null=True para evitar errores al crear el primer SuperAdmin
+    rol = models.ForeignKey(Rol, on_delete=models.SET_NULL, null=True, blank=True)
     hospital = models.ForeignKey(Hospital, on_delete=models.SET_NULL, null=True, blank=True)
-    numero_colegiatura = models.CharField(max_length=50, null=True, blank=True)
     especialidad = models.ForeignKey(Especialidad, on_delete=models.SET_NULL, null=True, blank=True)
+    
+    numero_colegiatura = models.CharField(max_length=50, null=True, blank=True)
     estado = models.BooleanField(default=True)
-    ultimo_acceso = models.DateTimeField(null=True, blank=True)
+    is_admin = models.BooleanField(default=False)
+    
     fecha_registro = models.DateTimeField(auto_now_add=True)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
-    
-    def __str__(self):
-        return self.nombre_completo
+
+    objects = UsuarioManager()
+
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = ['email', 'nombre_completo']
 
     class Meta:
         db_table = 'usuarios'
         verbose_name = 'Usuario'
         verbose_name_plural = 'Usuarios'
 
-
-class HospitalEspecialidad(models.Model):
-    '''Especialidades disponibles por hospital'''
-    hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE)
-    especialidad = models.ForeignKey(Especialidad, on_delete=models.CASCADE)
-    capacidad_camas = models.IntegerField(default=0)
-    estado = models.BooleanField(default=True)
-    fecha_asignacion = models.DateTimeField(auto_now_add=True)
-    
     def __str__(self):
-        return f"{self.hospital.nombre} - {self.especialidad.nombre}"
+        return f"{self.username} - {self.nombre_completo}"
 
-    class Meta:
-        db_table = 'hospital_especialidades'
-        unique_together = ('hospital', 'especialidad')
-        verbose_name = 'Hospital-Especialidad'
-        verbose_name_plural = 'Hospital-Especialidades'
+    @property
+    def is_staff(self):
+        return self.is_admin
 
-# === SUPERVISIÓN Y CONTROL ===
+    def has_perm(self, perm, obj=None):
+        return self.is_admin
+
+    def has_module_perms(self, app_label):
+        return self.is_admin
+
+
+# --- RELACIONES Y AUDITORÍA ---
 
 class Auditoria(models.Model):
-    '''Registro de todas las acciones del sistema'''
     usuario = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, blank=True)
-    accion = models.CharField(max_length=100)
+    accion = models.CharField(max_length=100) 
     tabla_afectada = models.CharField(max_length=50)
     registro_id = models.IntegerField(null=True, blank=True)
-    # JSONField para almacenar diccionarios/datos no estructurados
     datos_anteriores = models.JSONField(null=True, blank=True)
     datos_nuevos = models.JSONField(null=True, blank=True)
     ip_address = models.CharField(max_length=50, null=True, blank=True)
@@ -127,13 +146,18 @@ class Auditoria(models.Model):
         db_table = 'auditoria'
         verbose_name = 'Auditoría'
         verbose_name_plural = 'Auditorías'
+        ordering = ['-fecha_accion'] 
         indexes = [
             models.Index(fields=['usuario']),
             models.Index(fields=['fecha_accion']),
+            models.Index(fields=['tabla_afectada']),
         ]
 
+    def __str__(self):
+        return f"{self.usuario} - {self.accion} ({self.fecha_accion})"
+
+
 class ConfiguracionSistema(models.Model):
-    '''Parámetros globales del sistema'''
     clave = models.CharField(max_length=100, unique=True)
     valor = models.TextField()
     descripcion = models.TextField(null=True, blank=True)
@@ -147,8 +171,8 @@ class ConfiguracionSistema(models.Model):
         verbose_name = 'Configuración'
         verbose_name_plural = 'Configuraciones'
 
+
 class Reporte(models.Model):
-    '''Reportes generados en el sistema'''
     titulo = models.CharField(max_length=200)
     tipo_reporte = models.CharField(max_length=50)
     generado_por = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, blank=True)
@@ -163,5 +187,3 @@ class Reporte(models.Model):
         db_table = 'reportes'
         verbose_name = 'Reporte'
         verbose_name_plural = 'Reportes'
-
-

@@ -4,12 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
 from django.utils import timezone
-
-# Importamos modelos definidos en los otros módulos
 from superadmi.models import Hospital, Usuario, Especialidad
-# Doctor/views.py (Fragmento)
-
-# Importamos modelos definidos en el módulo de administración (admin_app)
 from admin_app.models import (
     Paciente, Internacion, Derivacion, SolicitudCama,
     Turno, HistoriaClinica  
@@ -19,7 +14,19 @@ from .forms import (
     HistoriaClinicaForm, DerivacionForm, 
     SolicitudCamaForm, 
 )
+##login
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
 
+@login_required
+def dashboard_doctor(request):
+    # Por ahora renderizamos una plantilla básica
+    return render(request, 'doctor/dashboard.html')
+    
+@login_required
+def agenda_medico(request):
+    return render(request, 'Doctor/agenda.html', {})
+    ##login
 def verificar_doctor(user):
     """Verificar que el usuario es doctor (Nivel 3)"""
     return user.is_authenticated and user.rol.nivel_acceso == 3

@@ -1,0 +1,123 @@
+{% extends 'superadmi/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-lg-12">
+            <div style="background: white; padding: 40px; border-radius: 20px; box-shadow: 0 4px 25px rgba(0,0,0,0.05); display: flex; align-items: center; border: 1px solid #e3e8ee;">
+                <div style="flex: 0 0 160px; margin-right: 40px; border-right: 2px solid #f0f2f5; padding-right: 40px; display: flex; justify-content: center;">
+                    <img src="{% static 'img/logo_gober.jpg' %}" alt="Logo" style="max-width: 100%; height: auto; max-height: 120px;">
+                </div>
+                <div style="flex: 1;">
+                    <h1 style="color: #33475b; font-weight: 800; font-size: 28px; margin-bottom: 8px;">
+                        {% if request.user.rol.nombre == 'SUPERADMIN' %}
+                            Gobierno Autónomo Departamental de Potosí
+                        {% else %}
+                            {{ request.user.hospital.nombre|default:"Panel Hospitalario" }}
+                        {% endif %}
+                    </h1>
+                    <p style="color: #7c98b6; font-size: 15px; max-width: 700px;">
+                        Bienvenido, <strong>{{ request.user.nombre_completo }}</strong>. 
+                        Tu rol actual es: <span class="badge bg-primary">{{ request.user.rol.nombre }}</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-6 mb-4">
+            <div style="background: white; padding: 25px; border-radius: 20px; border: 1px solid #f0f2f5; display: flex; align-items: center;">
+                <div style="background: #eef2ff; padding: 15px; border-radius: 12px; margin-right: 20px;">
+                    <i class="fa fa-users" style="color: #4e73df; font-size: 24px;"></i>
+                </div>
+                <div>
+                    <h2 style="color: #33475b; margin: 0; font-weight: 800;">{{ total_usuarios|default:"0" }}</h2>
+                    <p style="color: #858796; text-transform: uppercase; font-size: 10px; font-weight: 700; margin: 0;">Personal Registrado</p>
+                </div>
+            </div>
+        </div>
+
+        {% if request.user.rol.nombre == 'SUPERADMIN' %}
+        <div class="col-md-6 mb-4">
+            <div style="background: white; padding: 25px; border-radius: 20px; border: 1px solid #f0f2f5; display: flex; align-items: center;">
+                <div style="background: #fff4e5; padding: 15px; border-radius: 12px; margin-right: 20px;">
+                    <i class="fa fa-hospital" style="color: #ff9800; font-size: 24px;"></i>
+                </div>
+                <div>
+                    <h2 style="color: #33475b; margin: 0; font-weight: 800;">{{ total_hospitales|default:"0" }}</h2>
+                    <p style="color: #858796; text-transform: uppercase; font-size: 10px; font-weight: 700; margin: 0;">Hospitales bajo gestión</p>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-md-6 mb-4">
+            <div style="background: white; padding: 25px; border-radius: 20px; border: 1px solid #f0f2f5; display: flex; align-items: center;">
+                <div style="background: #fdf2f2; padding: 15px; border-radius: 12px; margin-right: 20px;">
+                    <i class="fa fa-stethoscope" style="color: #e53e3e; font-size: 24px;"></i>
+                </div>
+                <div>
+                    <h2 style="color: #33475b; margin: 0; font-weight: 800;">{{ total_especialidades|default:"0" }}</h2>
+                    <p style="color: #858796; text-transform: uppercase; font-size: 10px; font-weight: 700; margin: 0;">Especialidades Disponibles</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div style="background: white; padding: 25px; border-radius: 20px; border: 1px solid #f0f2f5; display: flex; align-items: center;">
+                <div style="background: #e6fffa; padding: 15px; border-radius: 12px; margin-right: 20px;">
+                    <i class="fa fa-user-injured" style="color: #38b2ac; font-size: 24px;"></i>
+                </div>
+                <div>
+                    <h2 style="color: #33475b; margin: 0; font-weight: 800;">{{ total_pacientes|default:"0" }}</h2>
+                    <p style="color: #858796; text-transform: uppercase; font-size: 10px; font-weight: 700; margin: 0;">Pacientes Internados</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div style="background: white; padding: 25px; border-radius: 20px; border: 1px solid #f0f2f5; display: flex; align-items: center;">
+                <div style="background: #f0fff4; padding: 15px; border-radius: 12px; margin-right: 20px;">
+                    <i class="fa fa-bed" style="color: #48bb78; font-size: 24px;"></i>
+                </div>
+                <div>
+                    <h2 style="color: #33475b; margin: 0; font-weight: 800;">{{ camas_libres|default:"0" }}</h2>
+                    <p style="color: #858796; text-transform: uppercase; font-size: 10px; font-weight: 700; margin: 0;">Camas Libres</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div style="background: white; padding: 25px; border-radius: 20px; border: 1px solid #f0f2f5; display: flex; align-items: center;">
+                <div style="background: #fff5f5; padding: 15px; border-radius: 12px; margin-right: 20px;">
+                    <i class="fa fa-procedures" style="color: #f56565; font-size: 24px;"></i>
+                </div>
+                <div>
+                    <h2 style="color: #33475b; margin: 0; font-weight: 800;">{{ camas_ocupadas|default:"0" }}</h2>
+                    <p style="color: #858796; text-transform: uppercase; font-size: 10px; font-weight: 700; margin: 0;">Camas Ocupadas</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-2">
+        <div class="col-12 text-center">
+            {% if request.user.rol.nombre == 'DOCTOR' or request.user.rol.nombre == 'ENFERMERA' %}
+                <a href="{% url 'superadmin:listar_pacientes' %}" class="btn btn-lg px-5" style="background: #ff9800; color: white; border-radius: 15px; font-weight: 700; box-shadow: 0 4px 15px rgba(255,152,0,0.3);">
+                    <i class="fas fa-clipboard-list me-2"></i> GESTIONAR PACIENTES
+                </a>
+            {% endif %}
+            
+            {% if request.user.rol.nombre == 'ADMIN_APP' %}
+                <a href="{% url 'superadmin:crear_camas_prueba' %}" class="btn btn-lg px-5" style="background: #4e73df; color: white; border-radius: 15px; font-weight: 700;">
+                    <i class="fas fa-plus-circle me-2"></i> HABILITAR 10 CAMAS
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -20,6 +20,10 @@ def verificar_enfermeria(user):
     return user.is_authenticated and user.rol.nivel_acceso == 4
 
 @login_required
+def dashboard_enfermera(request):
+    return render(request, 'enfermera/dashboard.html')
+    
+@login_required
 def dashboard_enfermeria(request):
     """Dashboard de enfermería"""
     if not verificar_enfermeria(request.user):

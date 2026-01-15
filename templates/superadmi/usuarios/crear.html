@@ -1,0 +1,47 @@
+{% extends 'superadmi/base.html' %}
+
+{% block content %}
+<div class="container-fluid" style="background: #152036; padding: 30px; color: white; min-height: 100vh;">
+    <div class="row">
+        <div class="col-lg-8 col-md-10 col-sm-12 col-xs-12" style="margin: auto; background: #1b2a47; padding: 20px; border-radius: 10px;">
+            
+            <h2 class="text-center">
+                {% if editando %}
+                    <i class="fa fa-edit"></i> Editar Personal: {{ usuario.nombre_completo }}
+                {% else %}
+                    <i class="fa fa-user-plus"></i> Registrar Nuevo Personal
+                {% endif %}
+            </h2>
+            
+            <hr style="border-color: #33476a;">
+            
+            <form method="post" class="form-horizontal">
+                {% csrf_token %}
+                
+                {% for field in form %}
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label class="col-sm-4 control-label">{{ field.label }}:</label>
+                    <div class="col-sm-8">
+                        {{ field }}
+                        {% if field.errors %}
+                        <span style="color: #ff6b6b; font-size: 12px;">{{ field.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+
+                <div class="text-center" style="margin-top: 20px;">
+                    <button type="submit" class="btn btn-success" style="width: 200px;">
+                        <i class="fa fa-save"></i> 
+                        {% if editando %} Actualizar Datos {% else %} Guardar Usuario {% endif %}
+                    </button>
+                    
+                    <a href="{% url 'superadmin:listar_usuarios' %}" class="btn btn-danger" style="width: 200px;">
+                        Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,176 +1,203 @@
 from django import forms
-# superadmi/forms.py
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.hashers import make_password
+
+# IMPORTACIÓN UNIFICADA: Todo desde tu carpeta actual .models
 from .models import ( 
     Hospital, Usuario, Rol, Especialidad,
     HospitalEspecialidad, Auditoria, ConfiguracionSistema, Reporte
 )
-# ... el resto del código del formulario ...
-from django.contrib.auth.hashers import make_password
 
+# Solo importamos Paciente y Cama de la otra app porque no existen en superadmi
+from hospital.models import Paciente, Cama
+
+# ==========================================
+# 1. FORMULARIO DE HOSPITALES
+# ==========================================
 class HospitalForm(forms.ModelForm):
-    """Formulario para crear/editar hospitales"""
     class Meta:
         model = Hospital
-        fields = ['nombre', 'direccion', 'telefono', 'email', 'capacidad_total', 'estado']
-        widgets = {
-            'nombre': forms.TextInput(attrs={'class': 'form-control'}),
-            'direccion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'telefono': forms.TextInput(attrs={'class': 'form-control'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'capacidad_total': forms.NumberInput(attrs={'class': 'form-control'}),
-            'estado': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-        }
-
-class RolForm(forms.ModelForm):
-    """Formulario para gestionar roles del sistema"""
-    class Meta:
-        model = Rol
-        fields = ['nombre', 'descripcion', 'nivel_acceso']
-        widgets = {
-            'nombre': forms.TextInput(attrs={'class': 'form-control'}),
-            'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'nivel_acceso': forms.Select(attrs={'class': 'form-control'}, choices=[
-                (1, 'SuperAdmin'),
-                (2, 'Admin'),
-                (3, 'Doctor'),
-                (4, 'Enfermera'),
-            ]),
-        }
-
-class EspecialidadForm(forms.ModelForm):
-    """Formulario para gestionar especialidades médicas"""
-    class Meta:
-        model = Especialidad
-        fields = ['nombre', 'descripcion', 'codigo', 'estado']
-        widgets = {
-            'nombre': forms.TextInput(attrs={'class': 'form-control'}),
-            'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'codigo': forms.TextInput(attrs={'class': 'form-control'}),
-            'estado': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-        }
-
-class UsuarioForm(forms.ModelForm):
-    """Formulario para crear/editar usuarios del sistema"""
-    password = forms.CharField(
-        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
-        required=False,
-        help_text='Dejar en blanco para mantener la contraseña actual'
-    )
-    confirmar_password = forms.CharField(
-        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
-        required=False
-    )
+        fields = ['nombre', 'direccion', 'telefono', 'email']
     
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs.update({'class': 'form-control custom-input'})
+
+# ==========================================
+# 2. FORMULARIO DE REGISTRO DE PERSONAL
+# ==========================================
+class RegistroPersonalForm(forms.ModelForm):
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control custom-input', 'placeholder': 'Mínimo 6 caracteres'}),
+        min_length=6,
+        label="Contraseña"
+    )
+    confirm_password = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control custom-input', 'placeholder': 'Repita la contraseña'}),
+        label="Confirmar Contraseña"
+    )
+
     class Meta:
         model = Usuario
         fields = [
-            'nombre_completo', 'email', 'telefono', 'rol', 'hospital',
-            'numero_colegiatura', 'especialidad', 'estado'
+            'nombre_completo', 'email', 'telefono', 
+            'rol', 'hospital', 'numero_colegiatura', 'especialidad'
         ]
-        widgets = {
-            'nombre_completo': forms.TextInput(attrs={'class': 'form-control'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'telefono': forms.TextInput(attrs={'class': 'form-control'}),
-            'rol': forms.Select(attrs={'class': 'form-control'}),
-            'hospital': forms.Select(attrs={'class': 'form-control'}),
-            'numero_colegiatura': forms.TextInput(attrs={'class': 'form-control'}),
-            'especialidad': forms.Select(attrs={'class': 'form-control'}),
-            'estado': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-        }
-    
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Aplicamos estilos Bootstrap
+        for field_name, field in self.fields.items():
+            if field_name not in ['password', 'confirm_password']:
+                field.widget.attrs.update({'class': 'form-control custom-input'})
+        
+        # IMPORTANTE: Usamos el Hospital del queryset correcto (.models)
+        self.fields['hospital'].queryset = Hospital.objects.all().order_by('nombre')
+        self.fields['hospital'].empty_label = "Seleccione un Hospital"
+        
+        self.fields['especialidad'].required = False
+        self.fields['numero_colegiatura'].required = False
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if Usuario.objects.filter(email=email).exists():
+            raise forms.ValidationError("Este correo electrónico ya está registrado.")
+        return email
+
     def clean(self):
         cleaned_data = super().clean()
-        password = cleaned_data.get('password')
-        confirmar_password = cleaned_data.get('confirmar_password')
-        
-        if password and password != confirmar_password:
-            raise forms.ValidationError('Las contraseñas no coinciden')
-        
+        password = cleaned_data.get("password")
+        confirm_password = cleaned_data.get("confirm_password")
+        if password and confirm_password and password != confirm_password:
+            self.add_error('confirm_password', "Las contraseñas no coinciden")
         return cleaned_data
-    
+
     def save(self, commit=True):
         usuario = super().save(commit=False)
-        password = self.cleaned_data.get('password')
+        usuario.username = usuario.email
+        usuario.set_password(self.cleaned_data["password"])
         
-        if password:
-            usuario.password_hash = make_password(password)
+        # Cambia esto de 'is_active' a 'estado'
+        usuario.estado = True 
         
         if commit:
             usuario.save()
         return usuario
 
-class HospitalEspecialidadForm(forms.ModelForm):
-    """Formulario para asignar especialidades a hospitales"""
+# ==========================================
+# 3. FORMULARIO DE EDICIÓN DE USUARIO
+# ==========================================
+class UsuarioForm(forms.ModelForm):
+    class Meta:
+        model = Usuario
+        # Cambiamos 'is_active' de regreso a 'estado'
+        fields = [
+            'nombre_completo', 'email', 'telefono', 'rol', 'hospital',
+            'numero_colegiatura', 'especialidad', 'estado'
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            if field_name == 'estado':
+                # Si 'estado' es un BooleanField en tu modelo:
+                field.widget.attrs.update({'class': 'form-check-input'})
+                field.label = "Cuenta Activa"
+            else:
+                field.widget.attrs.update({'class': 'form-control custom-input'})
+
+# ==========================================
+# 4. OTROS FORMULARIOS
+# ==========================================
+class AsignarCapacidadForm(forms.ModelForm):
     class Meta:
         model = HospitalEspecialidad
-        fields = ['hospital', 'especialidad', 'capacidad_camas', 'estado']
+        fields = ['hospital', 'especialidad', 'capacidad_camas']
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs.update({'class': 'form-control custom-input'})
+
+class RolForm(forms.ModelForm):
+    class Meta:
+        model = Rol
+        fields = ['nombre', 'descripcion', 'nivel_acceso']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs.update({'class': 'form-control custom-input'})
+
+class LoginForm(AuthenticationForm):
+    username = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control custom-input', 'placeholder': 'Usuario'}))
+    password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control custom-input', 'placeholder': 'Contraseña'}))
+
+class PacienteForm(forms.ModelForm):
+    class Meta:
+        model = Paciente
+        fields = ['nombre_completo', 'dni', 'fecha_nacimiento', 'genero', 'telefono', 'direccion', 'hospital', 'cama_asignada']
         widgets = {
-            'hospital': forms.Select(attrs={'class': 'form-control'}),
-            'especialidad': forms.Select(attrs={'class': 'form-control'}),
-            'capacidad_camas': forms.NumberInput(attrs={'class': 'form-control'}),
-            'estado': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'fecha_nacimiento': forms.DateInput(attrs={'type': 'date'}),
+            'direccion': forms.Textarea(attrs={'rows': 2}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['cama_asignada'].queryset = Cama.objects.filter(estado='LIBRE')
+        for field in self.fields.values():
+            field.widget.attrs.update({'class': 'form-control custom-input'})
+# Agrégalo al final de forms.py
+class EspecialidadForm(forms.ModelForm):
+    class Meta:
+        model = Especialidad
+        fields = ['nombre', 'descripcion', 'estado']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            # Si el campo es un checkbox de estado, le damos clase de bootstrap distinta
+            if isinstance(field.widget, forms.CheckboxInput):
+                field.widget.attrs.update({'class': 'form-check-input'})
+            else:
+                field.widget.attrs.update({'class': 'form-control custom-input'})
+
+
+# Formularios faltantes para resolver errores de importación en views.py
+
 class ConfiguracionSistemaForm(forms.ModelForm):
-    """Formulario para configuración del sistema"""
     class Meta:
         model = ConfiguracionSistema
         fields = ['clave', 'valor', 'descripcion', 'tipo_dato', 'modificable_por']
-        widgets = {
-            'clave': forms.TextInput(attrs={'class': 'form-control'}),
-            'valor': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
-            'tipo_dato': forms.Select(attrs={'class': 'form-control'}, choices=[
-                ('string', 'Texto'),
-                ('number', 'Número'),
-                ('boolean', 'Booleano'),
-                ('json', 'JSON'),
-            ]),
-            'modificable_por': forms.Select(attrs={'class': 'form-control'}, choices=[
-                ('superadmin', 'Solo SuperAdmin'),
-                ('admin', 'Admin y SuperAdmin'),
-            ]),
-        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs.update({'class': 'form-control custom-input'})
 
 class ReporteForm(forms.ModelForm):
-    """Formulario para generar reportes"""
     class Meta:
         model = Reporte
         fields = ['titulo', 'tipo_reporte', 'hospital', 'fecha_desde', 'fecha_hasta']
-        widgets = {
-            'titulo': forms.TextInput(attrs={'class': 'form-control'}),
-            'tipo_reporte': forms.Select(attrs={'class': 'form-control'}, choices=[
-                ('ocupacion', 'Reporte de Ocupación'),
-                ('derivaciones', 'Reporte de Derivaciones'),
-                ('personal', 'Reporte de Personal'),
-                ('equipamiento', 'Reporte de Equipamiento'),
-            ]),
-            'hospital': forms.Select(attrs={'class': 'form-control'}),
-            'fecha_desde': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'fecha_hasta': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-        }
 
-class FiltroAuditoriaForm(forms.Form):
-    """Formulario para filtrar auditoría"""
-    usuario = forms.ModelChoiceField(
-        queryset=Usuario.objects.all(),
-        required=False,
-        widget=forms.Select(attrs={'class': 'form-control'})
-    )
-    accion = forms.ChoiceField(
-        choices=[('', 'Todas')] + [
-            ('crear', 'Crear'),
-            ('editar', 'Editar'),
-            ('eliminar', 'Eliminar'),
-        ],
-        required=False,
-        widget=forms.Select(attrs={'class': 'form-control'})
-    )
-    fecha_desde = forms.DateField(
-        required=False,
-        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'})
-    )
-    fecha_hasta = forms.DateField(
-        required=False,
-        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'})
-    )
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            if 'fecha' in field_name:
+                field.widget = forms.DateInput(attrs={'class': 'form-control custom-input', 'type': 'date'})
+            else:
+                field.widget.attrs.update({'class': 'form-control custom-input'})
+
+class HospitalEspecialidadForm(forms.ModelForm):
+    class Meta:
+        model = HospitalEspecialidad
+        fields = ['hospital', 'especialidad', 'capacidad_camas', 'estado']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            if field_name == 'estado':
+                field.widget.attrs.update({'class': 'form-check-input'})
+            else:
+                field.widget.attrs.update({'class': 'form-control custom-input'})

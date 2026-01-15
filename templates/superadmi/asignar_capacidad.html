@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow" style="border-radius: 15px;">
+        <div class="card-header bg-primary text-white" style="border-radius: 15px 15px 0 0;">
+            <h3 class="mb-0"><i class="fas fa-bed"></i> Asignar Capacidad por Especialidad</h3>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label font-weight-bold">Hospital</label>
+                        {{ form.hospital }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label font-weight-bold">Especialidad</label>
+                        {{ form.especialidad }}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label font-weight-bold">Número de Camas</label>
+                        {{ form.capacidad_camas }}
+                    </div>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-end">
+                    <a href="{% url 'superadmin:dashboard_superadmin' %}" class="btn btn-secondary mr-2">Cancelar</a>
+                    <button type="submit" class="btn btn-success">Guardar Asignación</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

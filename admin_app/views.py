@@ -17,7 +17,13 @@ from .forms import (
     PersonalForm, TurnoForm, AsistenciaForm, TransferenciaInternaForm,
     NotificacionForm
 )
+##login
+from django.contrib.auth.decorators import login_required
 
+@login_required
+def dashboard_admin(request):
+    return render(request, 'admin_app/dashboard.html')
+    
 def verificar_admin(user):
     """Verificar que el usuario es admin"""
     return user.is_authenticated and user.rol.nivel_acceso == 2

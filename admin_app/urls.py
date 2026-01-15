@@ -3,9 +3,16 @@ from django.urls import path
 from . import views
 
 app_name = 'admin'  # Namespace: {% url 'admin:listar_pacientes' %}
+##
+app_name = 'gestion'
 
 urlpatterns = [
-    path('', views.dashboard_admin, name='dashboard'),
+    path('dashboard/', views.dashboard_admin, name='dashboard'),
+    # ... otras URLs del administrador de gestión
+]
+##
+urlpatterns = [
+   path('dashboard/', views.dashboard_admin, name='dashboard_admin'),
 
     # Pacientes
     path('pacientes/', views.listar_pacientes, name='listar_pacientes'),

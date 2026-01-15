@@ -1,11 +1,21 @@
 # enfermera/urls.py
 from django.urls import path
 from . import views
+###login
+from django.urls import path
+from . import views
 
+app_name = 'enfermeria'
+
+urlpatterns = [
+    path('dashboard/', views.dashboard_enfermeria, name='dashboard'),
+    # ... otras URLs de enfermería
+]
+###login
 app_name = 'enfermeria'  # Namespace: {% url 'enfermeria:mapa_camas' %}
 
 urlpatterns = [
-    path('', views.dashboard_enfermeria, name='dashboard'),
+    path('dashboard/', views.dashboard_enfermera, name='dashboard_enfermera'),
     
     # Gestión Visual
     path('mapa-camas/', views.mapa_camas, name='mapa_camas'),

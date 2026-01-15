@@ -1,0 +1,275 @@
+{% extends 'superadmi/base.html' %}
+{% load static %}
+
+{% block content %}
+<h1 style="color: red; font-size: 1.2rem; padding-left: 1.5rem; padding-top: 1rem;">TOTAL REGISTROS: {{ hospitales.count }}</h1>
+
+<div class="container-fluid py-4" style="background-color: #f8f9fa; min-height: 100vh;">
+    
+    <div class="row mb-4">
+        <div class="col-12 d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h2 style="color: #33475b; font-weight: 700; margin: 0;">
+                    <i class="fas fa-hospital" style="color: #ff9800;"></i> Gestión de Centros Hospitalarios
+                </h2>
+                <p class="text-muted small">Panel de administración de infraestructura</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary fw-bold" onclick="window.location.reload();">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <button class="btn btn-warning text-white fw-bold px-4 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalCrearHospital" style="background: #ff9800; border-radius: 10px; border: none;">
+                    <i class="fas fa-plus-circle me-2"></i> Nuevo Hospital
+                </button>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm p-3" style="border-radius: 15px; border-left: 5px solid #ff9800;">
+                <div class="d-flex align-items-center">
+                    <div class="bg-warning bg-opacity-10 p-3 rounded-circle me-3">
+                        <i class="fas fa-building text-warning fa-lg"></i>
+                    </div>
+                    <div>
+                        <small class="text-muted fw-bold">HOSPITALES</small>
+                        <h4 class="fw-bold m-0">{{ hospitales.count }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm p-3" style="border-radius: 15px; border-left: 5px solid #24caa1;">
+                <div class="d-flex align-items-center">
+                    <div class="bg-success bg-opacity-10 p-3 rounded-circle me-3">
+                        <i class="fas fa-bed text-success fa-lg"></i>
+                    </div>
+                    <div>
+                        <small class="text-muted fw-bold">TOTAL CAMAS</small>
+                        <h4 class="fw-bold m-0">{{ total_c|default:"0" }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if messages %}
+        <div id="alerts-container">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm border-0 mb-3" role="alert" style="border-radius: 10px;">
+                <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %} me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 15px;">
+        <div class="card-header bg-white py-3 border-0">
+            <div class="input-group w-50">
+                <span class="input-group-text bg-light border-0"><i class="fas fa-search text-muted"></i></span>
+                <input type="text" id="busquedaHospital" class="form-control bg-light border-0" placeholder="Buscar hospital...">
+            </div>
+        </div>
+        
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="tablaHospitales">
+                    <thead class="bg-light text-muted small text-uppercase">
+                        <tr>
+                            <th class="px-4 py-3 border-0">Información del Centro</th>
+                            <th class="px-4 py-3 border-0">Contacto</th>
+                            <th class="px-4 py-3 border-0">Capacidad</th>
+                            <th class="px-4 py-3 border-0 text-center">Estado</th>
+                            <th class="px-4 py-3 border-0 text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for hospital in hospitales %}
+                        <tr>
+                            <td class="px-4 py-3">
+                                <strong>{{ hospital.nombre }}</strong><br>
+                                <small class="text-muted"><i class="fas fa-map-marker-alt"></i> {{ hospital.direccion }}</small>
+                            </td>
+                            <td class="px-4 py-3 small">
+                                <div><i class="far fa-envelope me-2"></i>{{ hospital.email|default:"N/A" }}</div>
+                                <div><i class="fas fa-phone-alt me-2"></i>{{ hospital.telefono|default:"N/A" }}</div>
+                            </td>
+                            <td class="px-4 py-3">
+                                <span class="badge bg-light text-primary border px-3 py-2">
+                                    <i class="fas fa-bed me-2"></i>{{ hospital.capacidad_camas|default:0 }} Camas
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                {% if hospital.estado %}
+                                    <span class="badge rounded-pill bg-success bg-opacity-10 text-success px-3 py-2">● Activo</span>
+                                {% else %}
+                                    <span class="badge rounded-pill bg-danger bg-opacity-10 text-danger px-3 py-2">● Inactivo</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                <div class="btn-group shadow-sm" style="border-radius: 10px; overflow: hidden;">
+                                    <button class="btn btn-white btn-sm px-3" 
+                                            onclick="abrirModalEditar('{{ hospital.id }}', '{{ hospital.nombre|escapejs }}', '{{ hospital.direccion|escapejs }}', '{{ hospital.telefono|escapejs }}', '{{ hospital.email|escapejs }}', '{{ hospital.capacidad_camas }}', '{{ hospital.estado }}')">
+                                        <i class="fas fa-edit text-primary"></i>
+                                    </button> 
+                                    <button onclick="confirmarEliminacion('{{ hospital.id }}', '{{ hospital.nombre|escapejs }}')" class="btn btn-white btn-sm px-3">
+                                        <i class="fas fa-trash text-danger"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalCrearHospital" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <form method="POST" action="{% url 'superadmin:crear_hospital' %}" class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+            {% csrf_token %}
+            <div class="modal-header bg-warning py-3 border-0">
+                <h5 class="modal-title fw-bold text-white"><i class="fas fa-plus-circle me-2"></i>Registrar Nuevo Centro</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small">NOMBRE DEL HOSPITAL</label>
+                        <input type="text" name="nombre" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small">CORREO ELECTRÓNICO</label>
+                        <input type="email" name="email" class="form-control">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-bold small">DIRECCIÓN</label>
+                        <input type="text" name="direccion" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small">TELÉFONO</label>
+                        <input type="text" name="telefono" class="form-control">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small">CAPACIDAD DE CAMAS</label>
+                        <input type="number" name="capacidad_camas" class="form-control" value="0" min="0">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light border-0">
+                <button type="button" class="btn btn-link text-secondary text-decoration-none" data-bs-dismiss="modal">CANCELAR</button>
+                <button type="submit" class="btn btn-warning text-white fw-bold px-5 shadow">GUARDAR REGISTRO</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEditarHospital" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <form id="formEditar" method="POST" class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+            {% csrf_token %}
+            <div class="modal-header bg-primary py-3 border-0">
+                <h5 class="modal-title fw-bold text-white"><i class="fas fa-edit me-2"></i>Actualizar Hospital</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small">NOMBRE</label>
+                        <input type="text" name="nombre" id="edit_nombre" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small">EMAIL</label>
+                        <input type="email" name="email" id="edit_email" class="form-control">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-bold small">DIRECCIÓN</label>
+                        <input type="text" name="direccion" id="edit_direccion" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small">TELÉFONO</label>
+                        <input type="text" name="telefono" id="edit_telefono" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold small">CAMAS</label>
+                        <input type="number" name="capacidad_camas" id="edit_camas" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold small">ESTADO</label>
+                        <select name="estado" id="edit_estado" class="form-select">
+                            <option value="True">Activo</option>
+                            <option value="False">Inactivo</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light border-0">
+                <button type="button" class="btn btn-link text-secondary text-decoration-none" data-bs-dismiss="modal">DESCARTAR</button>
+                <button type="submit" class="btn btn-primary px-5 fw-bold shadow">GUARDAR CAMBIOS</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEliminar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form id="formEliminar" method="POST" class="modal-content border-0 shadow" style="border-radius: 15px;">
+            {% csrf_token %}
+            <div class="modal-body text-center p-5">
+                <i class="fas fa-exclamation-triangle text-danger fa-4x mb-3"></i>
+                <h4 class="fw-bold">¿Eliminar Hospital?</h4>
+                <p class="text-muted">Se eliminará el hospital: <strong id="nombreHospitalEliminar"></strong></p>
+                <div class="d-flex gap-2 justify-content-center mt-4">
+                    <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">CANCELAR</button>
+                    <button type="submit" class="btn btn-danger px-4 shadow-sm">ELIMINAR AHORA</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Buscador
+    document.getElementById('busquedaHospital').addEventListener('keyup', function() {
+        let filtro = this.value.toLowerCase();
+        let filas = document.querySelectorAll('#tablaHospitales tbody tr');
+        filas.forEach(f => f.style.display = f.innerText.toLowerCase().includes(filtro) ? '' : 'none');
+    });
+
+    // Abrir Modal Editar
+    function abrirModalEditar(id, nombre, direccion, telefono, email, capacidad, estado) {
+        document.getElementById('edit_nombre').value = nombre;
+        document.getElementById('edit_direccion').value = direccion;
+        document.getElementById('edit_telefono').value = telefono;
+        document.getElementById('edit_email').value = email;
+        document.getElementById('edit_camas').value = capacidad;
+        
+        // Sincronizar el select de estado (Convierte el texto de Django a valor de Select)
+        let selectEstado = document.getElementById('edit_estado');
+        selectEstado.value = (estado === 'True' || estado === 'true') ? "True" : "False";
+
+        // Cambiar la URL del formulario
+        let urlBase = "{% url 'superadmin:editar_hospital' 0 %}";
+        document.getElementById('formEditar').action = urlBase.replace('0', id);
+        
+        new bootstrap.Modal(document.getElementById('modalEditarHospital')).show();
+    }
+
+    // Confirmar eliminación
+    function confirmarEliminacion(id, nombre) {
+        document.getElementById('nombreHospitalEliminar').innerText = nombre;
+        let urlBase = "{% url 'superadmin:eliminar_hospital' 0 %}";
+        document.getElementById('formEliminar').action = urlBase.replace('0', id);
+        new bootstrap.Modal(document.getElementById('modalEliminar')).show();
+    }
+</script>
+
+<style>
+    .btn-white { background: #fff; border: 1px solid #e2e8f0; }
+    .btn-white:hover { background: #f8fafc; }
+    .form-control:focus { border-color: #ff9800; box-shadow: 0 0 0 0.25rem rgba(255, 152, 0, 0.25); }
+</style>
+{% endblock %}
