@@ -17,6 +17,7 @@ urlpatterns = [
     path('hospitales/crear/', views.crear_hospital, name='crear_hospital'),
     path('hospitales/editar/<int:pk>/', views.editar_hospital, name='editar_hospital'),
     path('hospitales/eliminar/<int:pk>/', views.eliminar_hospital, name='eliminar_hospital'),
+    path('reporte-hospital/<int:hospital_id>/', views.reporte_hospital_pdf, name='reporte_hospital_pdf'),
     
     # Usuarios
     path('usuarios/', views.listar_usuarios, name='listar_usuarios'),
@@ -41,4 +42,5 @@ urlpatterns = [
     path('capacidades/', views.listar_capacidades, name='listar_capacidades'),
     path('capacidades/asignar/', views.asignar_capacidad, name='asignar_capacidad'),
     path('capacidades/editar/<int:pk>/', views.editar_capacidad, name='editar_capacidad'),
+    path('reporte-pdf/<int:hospital_id>/', views.reporte_hospital_pdf, name='reporte_pdf'),
 ]

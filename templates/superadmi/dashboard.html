@@ -2,122 +2,201 @@
 {% load static %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row mb-4">
-        <div class="col-lg-12">
-            <div style="background: white; padding: 40px; border-radius: 20px; box-shadow: 0 4px 25px rgba(0,0,0,0.05); display: flex; align-items: center; border: 1px solid #e3e8ee;">
-                <div style="flex: 0 0 160px; margin-right: 40px; border-right: 2px solid #f0f2f5; padding-right: 40px; display: flex; justify-content: center;">
-                    <img src="{% static 'img/logo_gober.jpg' %}" alt="Logo" style="max-width: 100%; height: auto; max-height: 120px;">
-                </div>
-                <div style="flex: 1;">
-                    <h1 style="color: #33475b; font-weight: 800; font-size: 28px; margin-bottom: 8px;">
-                        {% if request.user.rol.nombre == 'SUPERADMIN' %}
-                            Gobierno Autónomo Departamental de Potosí
-                        {% else %}
-                            {{ request.user.hospital.nombre|default:"Panel Hospitalario" }}
-                        {% endif %}
-                    </h1>
-                    <p style="color: #7c98b6; font-size: 15px; max-width: 700px;">
-                        Bienvenido, <strong>{{ request.user.nombre_completo }}</strong>. 
-                        Tu rol actual es: <span class="badge bg-primary">{{ request.user.rol.nombre }}</span>
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+    :root { --potosi-red: #aa0000; --dark-navy: #0f172a; }
+    .dashboard-container { background-color: #f1f5f9; min-height: 100vh; padding: 25px; font-family: 'Segoe UI', sans-serif; }
     
-    <div class="row mb-4">
-        <div class="col-md-6 mb-4">
-            <div style="background: white; padding: 25px; border-radius: 20px; border: 1px solid #f0f2f5; display: flex; align-items: center;">
-                <div style="background: #eef2ff; padding: 15px; border-radius: 12px; margin-right: 20px;">
-                    <i class="fa fa-users" style="color: #4e73df; font-size: 24px;"></i>
-                </div>
-                <div>
-                    <h2 style="color: #33475b; margin: 0; font-weight: 800;">{{ total_usuarios|default:"0" }}</h2>
-                    <p style="color: #858796; text-transform: uppercase; font-size: 10px; font-weight: 700; margin: 0;">Personal Registrado</p>
-                </div>
-            </div>
-        </div>
+    .hospital-card { border-radius: 20px; border: none; transition: 0.4s; margin-bottom: 35px; background: #fff; overflow: hidden; }
+    .hospital-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
+    
+    .col-operacion { background: #f8fafc; padding: 25px; border-right: 1px solid #e2e8f0; }
+    .col-gestion { background: #ffffff; padding: 25px; }
 
-        {% if request.user.rol.nombre == 'SUPERADMIN' %}
-        <div class="col-md-6 mb-4">
-            <div style="background: white; padding: 25px; border-radius: 20px; border: 1px solid #f0f2f5; display: flex; align-items: center;">
-                <div style="background: #fff4e5; padding: 15px; border-radius: 12px; margin-right: 20px;">
-                    <i class="fa fa-hospital" style="color: #ff9800; font-size: 24px;"></i>
-                </div>
-                <div>
-                    <h2 style="color: #33475b; margin: 0; font-weight: 800;">{{ total_hospitales|default:"0" }}</h2>
-                    <p style="color: #858796; text-transform: uppercase; font-size: 10px; font-weight: 700; margin: 0;">Hospitales bajo gestión</p>
-                </div>
-            </div>
-        </div>
-        {% else %}
-        <div class="col-md-6 mb-4">
-            <div style="background: white; padding: 25px; border-radius: 20px; border: 1px solid #f0f2f5; display: flex; align-items: center;">
-                <div style="background: #fdf2f2; padding: 15px; border-radius: 12px; margin-right: 20px;">
-                    <i class="fa fa-stethoscope" style="color: #e53e3e; font-size: 24px;"></i>
-                </div>
-                <div>
-                    <h2 style="color: #33475b; margin: 0; font-weight: 800;">{{ total_especialidades|default:"0" }}</h2>
-                    <p style="color: #858796; text-transform: uppercase; font-size: 10px; font-weight: 700; margin: 0;">Especialidades Disponibles</p>
-                </div>
-            </div>
-        </div>
-        {% endif %}
-    </div>
+    .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .stat-box { padding: 12px; border-radius: 12px; text-align: center; border: 1px solid #e2e8f0; background: white; }
+    .stat-box span { display: block; font-size: 1.4rem; font-weight: bold; line-height: 1; margin-bottom: 4px; }
+    .stat-box small { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; color: #64748b; }
 
-    <div class="row">
-        <div class="col-md-4 mb-4">
-            <div style="background: white; padding: 25px; border-radius: 20px; border: 1px solid #f0f2f5; display: flex; align-items: center;">
-                <div style="background: #e6fffa; padding: 15px; border-radius: 12px; margin-right: 20px;">
-                    <i class="fa fa-user-injured" style="color: #38b2ac; font-size: 24px;"></i>
-                </div>
-                <div>
-                    <h2 style="color: #33475b; margin: 0; font-weight: 800;">{{ total_pacientes|default:"0" }}</h2>
-                    <p style="color: #858796; text-transform: uppercase; font-size: 10px; font-weight: 700; margin: 0;">Pacientes Internados</p>
-                </div>
+    .staff-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 15px; display: flex; align-items: center; gap: 12px; height: 100%; }
+    .staff-icon { width: 35px; height: 35px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+    .staff-info b { font-size: 1.1rem; display: block; line-height: 1; }
+    .staff-info small { font-size: 0.7rem; color: #64748b; font-weight: 600; text-transform: uppercase; }
+
+    .pulse-red { animation: pulse-red-effect 2s infinite; border: 2px solid #ef4444 !important; }
+    @keyframes pulse-red-effect { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+</style>
+
+<div class="dashboard-container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center">
+            <img src="{% static 'img/logo_gober.jpg' %}" style="width: 55px;" class="me-3 rounded shadow-sm">
+            <div>
+                <h2 class="fw-bold text-dark mb-0">MONITOR DE RED HOSPITALARIA</h2>
+                <span class="badge bg-danger rounded-pill px-3">POTOSÍ - GESTIÓN CENTRAL</span>
             </div>
         </div>
-
-        <div class="col-md-4 mb-4">
-            <div style="background: white; padding: 25px; border-radius: 20px; border: 1px solid #f0f2f5; display: flex; align-items: center;">
-                <div style="background: #f0fff4; padding: 15px; border-radius: 12px; margin-right: 20px;">
-                    <i class="fa fa-bed" style="color: #48bb78; font-size: 24px;"></i>
-                </div>
-                <div>
-                    <h2 style="color: #33475b; margin: 0; font-weight: 800;">{{ camas_libres|default:"0" }}</h2>
-                    <p style="color: #858796; text-transform: uppercase; font-size: 10px; font-weight: 700; margin: 0;">Camas Libres</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4 mb-4">
-            <div style="background: white; padding: 25px; border-radius: 20px; border: 1px solid #f0f2f5; display: flex; align-items: center;">
-                <div style="background: #fff5f5; padding: 15px; border-radius: 12px; margin-right: 20px;">
-                    <i class="fa fa-procedures" style="color: #f56565; font-size: 24px;"></i>
-                </div>
-                <div>
-                    <h2 style="color: #33475b; margin: 0; font-weight: 800;">{{ camas_ocupadas|default:"0" }}</h2>
-                    <p style="color: #858796; text-transform: uppercase; font-size: 10px; font-weight: 700; margin: 0;">Camas Ocupadas</p>
-                </div>
+        <div class="text-end">
+            <h5 class="fw-bold mb-0 text-dark">{{ nombre_admin|upper }}</h5>
+            <div class="input-group input-group-sm mt-1 shadow-sm rounded-pill border overflow-hidden">
+                <span class="input-group-text border-0 bg-white"><i class="fas fa-search text-muted"></i></span>
+                <input type="text" id="hospSearch" class="form-control border-0" placeholder="Buscar hospital...">
             </div>
         </div>
     </div>
 
-    <div class="row mt-2">
-        <div class="col-12 text-center">
-            {% if request.user.rol.nombre == 'DOCTOR' or request.user.rol.nombre == 'ENFERMERA' %}
-                <a href="{% url 'superadmin:listar_pacientes' %}" class="btn btn-lg px-5" style="background: #ff9800; color: white; border-radius: 15px; font-weight: 700; box-shadow: 0 4px 15px rgba(255,152,0,0.3);">
-                    <i class="fas fa-clipboard-list me-2"></i> GESTIONAR PACIENTES
-                </a>
-            {% endif %}
-            
-            {% if request.user.rol.nombre == 'ADMIN_APP' %}
-                <a href="{% url 'superadmin:crear_camas_prueba' %}" class="btn btn-lg px-5" style="background: #4e73df; color: white; border-radius: 15px; font-weight: 700;">
-                    <i class="fas fa-plus-circle me-2"></i> HABILITAR 10 CAMAS
-                </a>
-            {% endif %}
+    <div class="card mb-4 border-0 shadow-lg" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 25px; color: white;">
+        <div class="card-body p-4">
+            <div class="row align-items-center text-center text-md-start">
+                <div class="col-md-3 border-end border-white border-opacity-10">
+                    <h6 class="text-info fw-bold small text-uppercase">Carga Total de Red</h6>
+                    <div class="d-flex align-items-center justify-content-center justify-content-md-start">
+                        <h1 class="fw-bold mb-0">{{ global.porcentaje }}%</h1>
+                        <div class="ms-3 text-start">
+                            <small class="d-block opacity-75">Camas Totales: {{ global.total_camas }}</small>
+                            <small class="d-block opacity-75">Pacientes: {{ global.pacientes }}</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 px-4 border-end border-white border-opacity-10">
+                    <div class="row g-3">
+                        <div class="col-4">
+                            <small class="d-block text-info fw-bold small">DOCTORES</small>
+                            <h4 class="fw-bold mb-0">{{ personal.doctores }}</h4>
+                        </div>
+                        <div class="col-4">
+                            <small class="d-block text-success fw-bold small">ENFERMERÍA</small>
+                            <h4 class="fw-bold mb-0">{{ personal.enfermeras }}</h4>
+                        </div>
+                        <div class="col-4 text-warning">
+                            <small class="d-block fw-bold small">EN ALERTA</small>
+                            <h4 class="fw-bold mb-0">{{ global.hosp_criticos }}</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex flex-column gap-1">
+                        <span class="badge bg-primary bg-opacity-25 border border-primary text-primary w-100 py-2">3ER NIVEL: {{ global.h_3er }}</span>
+                        <span class="badge bg-info bg-opacity-25 border border-info text-info w-100 py-2">2DO NIVEL: {{ global.h_2do }}</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+
+    {% for hosp in resumen_hospitales %}
+    <div class="card hospital-card shadow-sm {% if hosp.es_critico %}pulse-red{% endif %}" data-name="{{ hosp.nombre }}">
+        <div class="card-header border-0 p-3 bg-{{ hosp.semaforo_color }} text-white d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold mb-0 text-uppercase"><i class="fas fa-hospital me-2"></i>{{ hosp.nombre }}</h5>
+            <span class="badge bg-white text-dark rounded-pill shadow-sm fw-bold">CAPACIDAD: {{ hosp.porcentaje_gral }}%</span>
+        </div>
+
+        <div class="row g-0">
+            <div class="col-md-5 col-operacion">
+                <h6 class="fw-bold text-muted small text-uppercase mb-3">Monitor de Camas</h6>
+                <div class="stat-grid mb-4">
+                    <div class="stat-box border-success border-2 shadow-sm"><span class="text-success">{{ hosp.libres }}</span><small>Libres</small></div>
+                    <div class="stat-box border-danger border-2 shadow-sm"><span class="text-danger">{{ hosp.ocupadas }}</span><small>Ocupadas</small></div>
+                    <div class="stat-box shadow-sm"><span class="text-warning">{{ hosp.limpieza }}</span><small>Limpieza</small></div>
+                    <div class="stat-box shadow-sm"><span>{{ hosp.mantenimiento }}</span><small>Mant.</small></div>
+                    <div class="stat-box shadow-sm border-info"><span class="text-info">{{ hosp.reservadas }}</span><small>Reserva</small></div>
+                    <div class="stat-box bg-dark text-white border-0 shadow-sm"><span>{{ hosp.pacientes }}</span><small class="text-white opacity-75">Pacientes</small></div>
+                </div>
+
+                <h6 class="fw-bold text-muted small text-uppercase mb-3">Talento Humano</h6>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <div class="staff-card shadow-sm">
+                            <div class="staff-icon bg-primary-subtle text-primary"><i class="fas fa-user-md"></i></div>
+                            <div class="staff-info"><b>{{ hosp.h_medicos }}</b><small>Médicos</small></div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="staff-card shadow-sm">
+                            <div class="staff-icon bg-success-subtle text-success"><i class="fas fa-user-nurse"></i></div>
+                            <div class="staff-info"><b>{{ hosp.h_enfermeras }}</b><small>Enferm.</small></div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="staff-card shadow-sm">
+                            <div class="staff-icon bg-info-subtle text-info"><i class="fas fa-user-tie"></i></div>
+                            <div class="staff-info"><b>{{ hosp.h_admins|default:"0" }}</b><small>Admin.</small></div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="staff-card shadow-sm">
+                            <div class="staff-icon bg-warning-subtle text-warning"><i class="fas fa-broom"></i></div>
+                            <div class="staff-info"><b>{{ hosp.limpieza }}</b><small>Limpieza</small></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-7 col-gestion d-flex flex-column">
+                <div class="flex-grow-1">
+                    <h6 class="fw-bold text-muted small text-uppercase mb-3">Ocupación por Especialidad</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle">
+                            <thead class="table-light">
+                                <tr class="small text-muted">
+                                    <th>ESPECIALIDAD</th>
+                                    <th class="text-center">LIBRES</th>
+                                    <th>CARGA (%)</th>
+                                    <th class="text-end">ESTADO</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for esp in hosp.especialidades_list %}
+                                <tr>
+                                    <td class="fw-bold py-2">{{ esp.nombre }}</td>
+                                    <td class="text-center"><span class="badge bg-light text-dark border">{{ esp.libres }}</span></td>
+                                    <td style="width: 40%;">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="progress flex-grow-1" style="height: 8px; border-radius: 10px;">
+                                                <div class="progress-bar bg-{{ esp.color }}" style="width: {{ esp.porcentaje }}%"></div>
+                                            </div>
+                                            <small class="fw-bold">{{ esp.porcentaje }}%</small>
+                                        </div>
+                                    </td>
+                                    <td class="text-end"><i class="fas fa-circle text-{{ esp.color }} small"></i></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="row g-2 mt-4">
+                    <div class="col-4">
+                        <a href="{% url 'hospital:monitor_red' %}" class="btn btn-outline-danger w-100 rounded-pill fw-bold py-2 btn-sm">
+                            <i class="fas fa-exchange-alt me-1"></i> DERIVACIÓN
+                        </a>
+                    </div>
+                    <div class="col-4">
+                        <a href="{% url 'hospital:gestionar_infraestructura' %}?hospital_id={{ hosp.id }}" class="btn btn-dark w-100 rounded-pill fw-bold py-2 btn-sm">
+                            <i class="fas fa-cog me-1"></i> GESTIÓN
+                        </a>
+                    </div>
+                    <div class="col-4">
+                        <a href="{% url 'superadmin:reporte_hospital_pdf' hosp.id %}" target="_blank" class="btn btn-outline-secondary w-100 rounded-pill fw-bold py-2 btn-sm">
+                            <i class="fas fa-file-pdf me-1"></i> REPORTE
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
 </div>
+
+<script>
+    document.getElementById('hospSearch').addEventListener('keyup', function() {
+        let filter = this.value.toLowerCase();
+        document.querySelectorAll('.hospital-card').forEach(card => {
+            let name = card.dataset.name.toLowerCase();
+            card.style.display = name.includes(filter) ? "block" : "none";
+        });
+    });
+</script>
 {% endblock %}

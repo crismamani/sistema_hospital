@@ -1,0 +1,107 @@
+{% extends 'superadmi/base.html' %}
+
+{% block content %}
+<div class="container-fluid py-4" style="background-color: #f4f7f6; min-height: 100vh;">
+    
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 15px;">
+        <div class="card-body p-4">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h3 class="fw-bold text-primary mb-1">{{ hospital.nombre }}</h3>
+                    <p class="text-muted"><i class="fas fa-map-marker-alt me-2"></i>Gestión de Infraestructura por Especialidad</p>
+                </div>
+                <div class="col-md-6">
+                    <form method="GET" class="d-flex gap-2 justify-content-md-end">
+                        <input type="hidden" name="hospital_id" value="{{ hospital.id }}">
+                        <select name="piso" class="form-select w-auto shadow-sm" onchange="this.form.submit()">
+                            <option value="">Todos los Pisos</option>
+                            {% for p in lista_pisos %}
+                            <option value="{{ p }}" {% if piso_seleccionado == p %}selected{% endif %}>Piso {{ p }}</option>
+                            {% endfor %}
+                        </select>
+                        <a href="?hospital_id={{ hospital.id }}" class="btn btn-outline-secondary shadow-sm"><i class="fas fa-sync"></i></a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        {% for esp in especialidades %}
+        <div class="col-xl-4 col-md-6">
+            <div class="card h-100 border-0 shadow-sm card-especialidad" style="border-radius: 20px;">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between mb-3">
+                        <div class="p-3 bg-primary bg-opacity-10 rounded-3">
+                            <i class="fas fa-hospital-user text-primary fs-4"></i>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-light text-dark border fw-normal">Total: {{ esp.total_camas }}</span>
+                        </div>
+                    </div>
+
+                    <h4 class="fw-bold mb-1">{{ esp.nombre }}</h4>
+                    
+                    {% with porcentaje=esp.ocupadas|add:esp.reserva %}
+                        {% if esp.total_camas > 0 %}
+                            {% widthratio porcentaje esp.total_camas 100 as perc %}
+                            <div class="d-flex justify-content-between align-items-center mt-3 mb-1">
+                                <small class="fw-bold">Ocupación</small>
+                                <small class="fw-bold">{{ perc }}%</small>
+                            </div>
+                            <div class="progress mb-4" style="height: 8px; border-radius: 10px;">
+                                <div class="progress-bar {% if perc|add:0 > 80 %}bg-danger{% elif perc|add:0 > 50 %}bg-warning{% else %}bg-success{% endif %}" 
+                                     role="progressbar" style="width: {{ perc }}%"></div>
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+
+                    <div class="row g-2 mb-4 text-center">
+                        <div class="col-4">
+                            <div class="p-2 bg-light rounded-3">
+                                <div class="text-success fw-bold small">LIBRES</div>
+                                <div class="h5 mb-0 fw-bold">{{ esp.libres }}</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2 bg-light rounded-3">
+                                <div class="text-danger fw-bold small">OCUP.</div>
+                                <div class="h5 mb-0 fw-bold">{{ esp.ocupadas }}</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2 bg-light rounded-3">
+                                <div class="text-warning fw-bold small">LIMP.</div>
+                                <div class="h5 mb-0 fw-bold">{{ esp.limpieza }}</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2 bg-light rounded-3 text-muted">
+                                <div class="fw-bold small">MANT.</div>
+                                <div class="h5 mb-0 fw-bold">{{ esp.mantenimiento }}</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2 bg-light rounded-3">
+                                <div class="text-info fw-bold small">RESV.</div>
+                                <div class="h5 mb-0 fw-bold">{{ esp.reserva }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <a href="{% url 'hospital:detalle_camas_especialidad' hospital.id esp.id %}" 
+                       class="btn btn-dark w-100 rounded-pill py-2 fw-bold shadow-sm mt-auto">
+                        Gestionar Camas <i class="fas fa-chevron-right ms-2"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .card-especialidad { transition: all 0.3s ease; border: 1px solid transparent !important; }
+    .card-especialidad:hover { transform: translateY(-10px); border-color: #0d6efd !important; }
+</style>
+{% endblock %}

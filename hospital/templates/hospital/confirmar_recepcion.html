@@ -1,0 +1,57 @@
+{% extends 'superadmi/base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg border-0 rounded-4">
+                <div class="card-header bg-success text-white p-4">
+                    <h3 class="fw-bold mb-0">
+                        <i class="fas fa-check-double me-2"></i> Confirmar Recepción
+                    </h3>
+                </div>
+                <div class="card-body p-4">
+                    <div class="alert alert-info border-0 shadow-sm rounded-3">
+                        <h5 class="fw-bold mb-1"><i class="fas fa-user-injured me-2"></i> {{ derivacion.paciente.nombre_completo }}</h5>
+                        <p class="mb-0">Procedente de: <strong>{{ derivacion.hospital_origen.nombre }}</strong></p>
+                    </div>
+
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label class="form-label fw-bold"><i class="fas fa-bed text-success me-2"></i>Asignar Cama en {{ derivacion.hospital_destino.nombre }}</label>
+                            <select name="cama_id" class="form-select form-select-lg border-success" required>
+                                <option value="" disabled selected>Seleccione una cama libre...</option>
+                                {% for cama in camas_libres %}
+                                    <option value="{{ cama.id }}">
+                                        Cama {{ cama.numero }} - {{ cama.cuarto.nombre }} ({{ cama.cuarto.especialidad.nombre }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            {% if not camas_libres %}
+                                <div class="text-danger small mt-2">
+                                    <i class="fas fa-exclamation-triangle me-1"></i> No hay camas disponibles en este hospital.
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="bg-light p-3 rounded-3 mb-4 border">
+                            <small class="text-muted d-block">Motivo del traslado:</small>
+                            <p class="fst-italic mb-0">"{{ derivacion.motivo_traslado }}"</p>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg rounded-pill fw-bold shadow-sm" {% if not camas_libres %}disabled{% endif %}>
+                                Finalizar Traslado e Internar
+                            </button>
+                            <a href="{% url 'hospital:monitor_red' %}" class="btn btn-link text-secondary text-decoration-none text-center">
+                                Cancelar y volver
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

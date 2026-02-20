@@ -96,9 +96,10 @@ LOGIN_REDIRECT_URL = 'dashboard_redirect'
 # --- OTROS ---
 CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000', 'http://localhost:8000']
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-##AUTHENTICATION_BACKENDS = [
+AUTHENTICATION_BACKENDS = [
     #'superadmi.backends.HospitalAuthBackend',
-    #'django.contrib.auth.backends.ModelBackend',
+    'django.contrib.auth.backends.ModelBackend',
+    ]
 #]# Desactiva la actualización automática del último login para modelos personalizados
 # que no tienen el campo 'last_login'
-##AUTH_USER_MODEL = 'superadmi.Usuario' # Asegúrate que esta línea ya esté
+AUTH_USER_MODEL = 'superadmi.Usuario' # Asegúrate que esta línea ya esté

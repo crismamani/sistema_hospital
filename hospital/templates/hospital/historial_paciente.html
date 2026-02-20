@@ -1,0 +1,163 @@
+{% extends 'superadmi/base.html' %}
+
+{% block content %}
+<div class="container mt-4 mb-5">
+    <div class="card shadow-sm border-0 mb-4 rounded-3">
+        <div class="card-body bg-light">
+            <div class="row align-items-center">
+                <div class="col-md-auto text-center mb-3 mb-md-0">
+                    <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                        <i class="fas fa-user-injured fa-2x"></i>
+                    </div>
+                </div>
+                <div class="col-md border-start-md ps-md-4">
+                    <h2 class="mb-1 fw-bold text-dark">{{ paciente.nombre_completo }}</h2>
+                    <p class="text-muted mb-0">
+                        <span class="me-3"><i class="fas fa-id-card me-1"></i> DNI: {{ paciente.dni }}</span>
+                        <span class="me-3"><i class="fas fa-bed me-1"></i> Cama: {{ paciente.cama_asignada.numero|default:"Sin asignar" }}</span>
+                    </p>
+                </div>
+                <div class="col-md-auto mt-3 mt-md-0">
+                    <button type="button" class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#nuevaEvolucionModal">
+                        <i class="fas fa-plus-circle me-1"></i> Nueva Evolución
+                    </button>
+                    <a href="{% url 'hospital:lista_pacientes' %}" class="btn btn-outline-secondary shadow-sm">
+                        <i class="fas fa-arrow-left me-1"></i> Volver
+                    </a>
+                    <form action="{% url 'hospital:dar_alta_paciente' paciente.id %}" method="POST" class="d-inline" onsubmit="return confirm('¿Está seguro de dar de alta al paciente? La cama quedará disponible.');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success shadow-sm">
+                            <i class="fas fa-check-double me-1"></i> Dar de Alta
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <h4 class="mb-4 text-secondary"><i class="fas fa-history me-2"></i>Línea de Tiempo Médica</h4>
+            
+            {% if evoluciones %}
+                <div class="timeline">
+                    {% for evolucion in evoluciones %}
+                    <div class="card shadow-sm border-0 mb-4 border-start border-4 {% if evolucion.tipo == 'URGENCIA' %}border-danger{% else %}border-primary{% endif %} rounded-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-3">
+                                <div>
+                                    <span class="badge {% if evolucion.tipo == 'URGENCIA' %}bg-danger{% else %}bg-primary{% endif %} mb-2">
+                                        {{ evolucion.get_tipo_display }}
+                                    </span>
+                                    <h5 class="card-title fw-bold mb-0">{{ evolucion.fecha_registro|date:"d/m/Y H:i" }}</h5>
+                                </div>
+                                <div class="text-end text-muted small">
+                                    <i class="fas fa-user-md me-1"></i> {{ evolucion.creado_por|default:"Médico de Turno" }}
+                                </div>
+                            </div>
+
+                            <div class="row g-2 mb-3 text-center">
+                                <div class="col-4 col-md-auto">
+                                    <div class="bg-light border rounded p-2">
+                                        <small class="text-muted d-block">Temp.</small>
+                                        <span class="fw-bold">{{ evolucion.temperatura }}°C</span>
+                                    </div>
+                                </div>
+                                <div class="col-4 col-md-auto">
+                                    <div class="bg-light border rounded p-2">
+                                        <small class="text-muted d-block">Presión</small>
+                                        <span class="fw-bold">{{ evolucion.presion_arterial }}</span>
+                                    </div>
+                                </div>
+                                <div class="col-4 col-md-auto">
+                                    <div class="bg-light border rounded p-2">
+                                        <small class="text-muted d-block">Pulso</small>
+                                        <span class="fw-bold">{{ evolucion.frecuencia_cardiaca }} lpm</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <p class="card-text"><strong>Observaciones:</strong><br>{{ evolucion.descripcion }}</p>
+                            
+                            {% if evolucion.indicaciones %}
+                            <div class="bg-warning bg-opacity-10 p-3 rounded border-start border-warning border-3 mt-3">
+                                <h6 class="text-warning fw-bold mb-1"><i class="fas fa-prescription me-2"></i>Indicaciones</h6>
+                                <p class="mb-0 small">{{ evolucion.indicaciones }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info text-center py-5 border-0 shadow-sm">
+                    <i class="fas fa-clipboard-list fa-3x mb-3 opacity-50"></i>
+                    <p class="mb-0">No hay registros médicos para este paciente aún.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-header bg-dark text-white fw-bold">
+                    <i class="fas fa-info-circle me-2"></i>Datos de Admisión
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Ingreso: <span class="fw-bold">{{ paciente.fecha_registro|date:"d/m/Y" }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Hospital: <span class="fw-bold text-end small">{{ paciente.hospital.nombre }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="nuevaEvolucionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold"><i class="fas fa-edit me-2"></i>Nueva Nota de Evolución</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Tipo de Nota</label>
+                            {{ form.tipo }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Temperatura (°C)</label>
+                            {{ form.temperatura }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Presión Arterial</label>
+                            {{ form.presion_arterial }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Frecuencia Cardiaca (lpm)</label>
+                            {{ form.frecuencia_cardiaca }}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Descripción / Observaciones</label>
+                            {{ form.descripcion }}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold text-primary">Indicaciones Médicas</label>
+                            {{ form.indicaciones }}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary px-4">Guardar Evolución</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

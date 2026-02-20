@@ -44,12 +44,16 @@ class Rol(models.Model):
 
 class Hospital(models.Model):
     nombre = models.CharField(max_length=200)
+    nivel = models.IntegerField(choices=[(1, '1er Nivel'), (2, '2do Nivel'), (3, '3er Nivel')], default=1)
     direccion = models.TextField()
     telefono = models.CharField(max_length=20, null=True, blank=True)
     email = models.EmailField(max_length=100, null=True, blank=True)
     capacidad_camas = models.IntegerField(default=0) 
     estado = models.BooleanField(default=True)
 
+    def __str__(self):
+        return self.nombre
+    
 class Especialidad(models.Model):
     nombre = models.CharField(max_length=100)
     descripcion = models.TextField(null=True, blank=True)

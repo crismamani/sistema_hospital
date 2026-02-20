@@ -17,6 +17,7 @@ urlpatterns = [
     path('medico/', include('Doctor.urls', namespace='doctor')),
     path('enfermeria/', include('Enfermera.urls', namespace='enfermera')),
     path('api/', include('hospital_api.urls')),
+    path('hospital/', include('hospital.urls')),
 ]
 
 # Configuración para archivos estáticos y media en modo DEBUG

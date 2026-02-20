@@ -1,0 +1,35 @@
+{% extends 'superadmi/base.html' %}
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold"><i class="fas fa-broom text-warning me-2"></i>Camas Pendientes de Desinfección</h2>
+        <span class="badge bg-dark fs-5">{{ camas_sucias.count }} Camas</span>
+    </div>
+
+    <div class="row">
+        {% for cama in camas_sucias %}
+        <div class="col-md-4 mb-3">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden border-top border-4 border-warning">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-1">Cama {{ cama.numero }}</h5>
+                    <p class="text-muted small mb-3">
+                        <i class="fas fa-hospital"></i> {{ cama.cuarto.hospital.nombre }}<br>
+                        <i class="fas fa-door-open"></i> {{ cama.cuarto.nombre }} ({{ cama.cuarto.especialidad.nombre }})
+                    </p>
+                    <div class="d-grid">
+                        <a href="{% url 'hospital:finalizar_limpieza' cama.id %}" class="btn btn-success rounded-pill fw-bold">
+                            <i class="fas fa-check-circle me-1"></i> MARCAR COMO LISTA
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <i class="fas fa-sparkles text-muted fa-4x mb-3"></i>
+            <h4 class="text-muted">¡Todo limpio! No hay camas pendientes.</h4>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

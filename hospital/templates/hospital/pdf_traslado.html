@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        @page { size: letter; margin: 2cm; }
+        body { font-family: Helvetica, Arial, sans-serif; color: #333; }
+        .header { text-align: center; border-bottom: 2px solid #004a99; padding-bottom: 10px; }
+        .titulo { font-size: 18pt; font-weight: bold; color: #004a99; }
+        .seccion { margin-top: 20px; background: #f2f2f2; padding: 10px; font-weight: bold; }
+        .dato { margin: 10px 0; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        .footer { margin-top: 50px; text-align: center; font-size: 9pt; color: #777; }
+        .firmas { margin-top: 80px; }
+        .espacio-firma { border-top: 1px solid #000; width: 200px; text-align: center; display: inline-block; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="titulo">ORDEN DE TRASLADO MÉDICO</div>
+        <div>Red Hospitalaria de Emergencias</div>
+    </div>
+
+    <p style="text-align: right;"><strong>Fecha:</strong> {{ fecha|date:"d/m/Y H:i" }}</p>
+
+    <div class="seccion">DATOS DEL PACIENTE</div>
+    <div class="dato"><strong>Nombre Completo:</strong> {{ derivacion.paciente.nombre_completo }}</div>
+    <div class="dato"><strong>Cédula de Identidad:</strong> {{ derivacion.paciente.ci }}</div>
+
+    <div class="seccion">DETALLES DEL TRASLADO</div>
+    <div class="dato"><strong>Origen:</strong> {{ derivacion.hospital_origen.nombre }}</div>
+    <div class="dato"><strong>Destino:</strong> {{ derivacion.hospital_destino.nombre }}</div>
+    <div class="dato"><strong>Prioridad:</strong> {{ derivacion.prioridad }}</div>
+    
+    <div class="seccion">MOTIVO MÉDICO</div>
+    <p>{{ derivacion.motivo_traslado }}</p>
+
+    <div class="firmas">
+        <table style="width: 100%;">
+            <tr>
+                <td style="text-align: center;">
+                    <div class="espacio-firma">Médico Solicitante</div>
+                </td>
+                <td style="text-align: center;">
+                    <div class="espacio-firma">Responsable Ambulancia</div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="footer">
+        Este documento es una orden oficial de la Red Hospitalaria. <br>
+        Generado automáticamente por el Sistema de Gestión Hospitalaria.
+    </div>
+</body>
+</html>
