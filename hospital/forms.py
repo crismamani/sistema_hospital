@@ -1,6 +1,6 @@
 from django import forms
 from superadmi.models import Hospital
-from .models import Paciente, Cama, EvolucionMedica, Especialidad, Cuarto, Derivacion
+from .models import Paciente, Cama, EvolucionMedica, Especialidad, Cuarto, Derivacion, FormularioD7b, FormularioD7, ContrarreferenciaD7a, ReporteDiario
 class CuartoForm(forms.ModelForm):
     class Meta:
         model = Cuarto
@@ -15,33 +15,47 @@ class CuartoForm(forms.ModelForm):
 class CamaForm(forms.ModelForm):
     class Meta:
         model = Cama
-        fields = ['cuarto', 'numero', 'estado']
+        # Agregamos 'prioridad' a la lista de campos
+        fields = ['cuarto', 'numero', 'estado', 'prioridad']
+        
         widgets = {
             'cuarto': forms.Select(attrs={'class': 'form-select'}),
-            'numero': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: Cama-01'}),
+            'numero': forms.TextInput(attrs={
+                'class': 'form-control', 
+                'placeholder': 'Ej: Cama-01'
+            }),
             'estado': forms.Select(attrs={'class': 'form-select'}),
+            'prioridad': forms.Select(attrs={'class': 'form-select'}),
         }
 
 class PacienteForm(forms.ModelForm):
     class Meta:
         model = Paciente
-        fields = ['nombre_completo', 'dni', 'fecha_nacimiento', 'genero', 'telefono', 'direccion', 'hospital', 'cama_asignada']
+        # IMPORTANTE: Añadir los nuevos campos médicos aquí
+        fields = [
+            'nombre_completo', 'dni', 'fecha_nacimiento', 'genero', 
+            'telefono', 'direccion', 'hospital', 'cama_asignada',
+            'motivo_ingreso', 'presion_arterial', 'temperatura', 
+            'frecuencia_cardiaca', 'saturacion_oxigeno', 'alergias'
+        ]
         widgets = {
             'fecha_nacimiento': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'nombre_completo': forms.TextInput(attrs={'class': 'form-control'}),
-            'dni': forms.TextInput(attrs={'class': 'form-control'}),
-            'hospital': forms.Select(attrs={'class': 'form-select'}),
-            'genero': forms.Select(attrs={'class': 'form-select'}),
-            'telefono': forms.TextInput(attrs={'class': 'form-control'}),
+            'motivo_ingreso': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Diagnóstico inicial...'}),
             'direccion': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'alergias': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Solo mostramos camas que estén LIBRES para no sobreescribir pacientes
+        # Filtro de seguridad para no asignar camas ocupadas
         self.fields['cama_asignada'].queryset = Cama.objects.filter(estado='LIBRE')
-        self.fields['cama_asignada'].widget.attrs.update({'class': 'form-select'})
-
+        
+        # Aplicamos la clase 'form-control' a TODOS los campos automáticamente para que se vean PRO
+        for field in self.fields:
+            if field not in ['hospital', 'cama_asignada', 'genero']:
+                self.fields[field].widget.attrs.update({'class': 'form-control form-control-pro'})
+            else:
+                self.fields[field].widget.attrs.update({'class': 'form-select form-control-pro'})
 class EvolucionMedicaForm(forms.ModelForm):
     class Meta:
         model = EvolucionMedica
@@ -74,3 +88,40 @@ class DerivacionForm(forms.ModelForm):
                 cuartos__especialidad_id=especialidad_id,
                 cuartos__camas__estado='LIBRE'
             ).distinct()
+class D7Form(forms.ModelForm):
+    class Meta:
+        model = FormularioD7
+        fields = '__all__'
+        exclude = ['paciente']
+
+class D7bForm(forms.ModelForm):
+    class Meta:
+        model = FormularioD7b
+        fields = '__all__'
+        exclude = ['paciente'] # Esto es importante para que no falle al guardar
+
+class ContrarreferenciaD7aForm(forms.ModelForm):
+    class Meta:
+        model = ContrarreferenciaD7a
+        fields = '__all__'
+        widgets = {
+            'fecha': forms.DateInput(attrs={'type': 'date'}),
+            'hora': forms.TimeInput(attrs={'type': 'time'}),
+        }
+##control diario
+class ReporteDiarioForm(forms.ModelForm):
+    class Meta:
+        model = ReporteDiario
+        exclude = ['hospital', 'creado_por', 'fecha_registro']
+        widgets = {
+            'fecha': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'turno': forms.Select(attrs={'class': 'form-select'}),
+            'observaciones': forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Aplicamos clases de Bootstrap a todos los campos numéricos y de texto
+        for field in self.fields:
+            if field not in ['fecha', 'turno', 'observaciones']:
+                self.fields[field].widget.attrs.update({'class': 'form-control'})

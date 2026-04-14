@@ -3,89 +3,281 @@
 {% block content %}
 <div class="container py-5">
     <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
-            <div class="card border-0 shadow-lg" style="border-radius: 25px;">
-                <div class="card-header bg-primary text-white p-4" style="border-radius: 25px 25px 0 0;">
-                    <div class="d-flex align-items-center">
-                        <a href="javascript:history.back()" class="btn btn-link text-white me-3 p-0">
-                            <i class="fas fa-arrow-left fa-lg"></i>
-                        </a>
-                        <h4 class="mb-0 fw-bold"><i class="fas fa-ambulance me-2"></i>Solicitud de Derivación</h4>
+        <div class="col-xl-10 col-lg-11">
+            <div class="card border-0 shadow-lg main-card">
+                <div class="card-header bg-dark-premium text-white p-4 border-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <a href="javascript:history.back()" class="btn btn-outline-light rounded-circle me-3 back-btn">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                            <div>
+                                <h4 class="mb-0 fw-bold tracking-tight"><i class="fas fa-ambulance me-2 text-info"></i>CENTRO DE DESPACHO</h4>
+                                <small class="text-info opacity-75">Protocolo de Derivación Inter-Hospitalaria</small>
+                            </div>
+                        </div>
+                        <div class="text-end d-none d-md-block">
+                            <span class="badge rounded-pill bg-info text-dark px-3 py-2 fw-bold">ID TRASLADO: #{{ paciente.id }}2026</span>
+                        </div>
                     </div>
                 </div>
-                
+
                 <div class="card-body p-4 p-md-5">
-                    <div class="bg-light p-3 rounded-4 mb-4 border-start border-primary border-4">
-                        <small class="text-muted d-block fw-bold">PACIENTE A TRASLADAR:</small>
-                        <span class="h5 fw-bold text-dark">{{ paciente.nombre_completo|upper }}</span>
-                        <div class="mt-1">
-                            <span class="badge bg-secondary">DNI: {{ paciente.dni }}</span>
-                            <span class="badge bg-info">Origen: {{ paciente.hospital.nombre }}</span>
+                    <div class="patient-banner p-4 rounded-4 mb-5 d-flex align-items-center shadow-sm">
+                        <div class="patient-avatar me-4">
+                            <div class="avatar-circle">
+                                <span class="h2 mb-0 text-white">{{ paciente.nombre_completo|slice:":1"|upper }}</span>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h2 class="fw-extrabold text-dark mb-1">{{ paciente.nombre_completo|upper }}</h2>
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <span class="badge-custom bg-secondary-soft"><i class="fas fa-fingerprint me-1"></i> DNI: {{ paciente.dni }}</span>
+                                        <span class="badge-custom bg-primary-soft"><i class="fas fa-hospital-user me-1"></i> ORIGEN: {{ paciente.hospital.nombre }}</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                                    <div class="preparation-status">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <small class="fw-bold">Preparación:</small>
+                                            <small class="fw-bold text-info">65%</small>
+                                        </div>
+                                        <div class="progress" style="height: 8px;">
+                                            <div class="progress-bar bg-info progress-bar-striped progress-bar-animated" style="width: 65%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <form method="POST">
                         {% csrf_token %}
-                        
-                        <div class="mb-4">
-                            <label class="form-label fw-bold"><i class="fas fa-hospital-alt me-2 text-primary"></i>Hospital de Destino</label>
-                            <select name="hospital_destino" class="form-select form-select-lg rounded-pill border-2" required>
-                                <option value="" selected disabled>Seleccione el hospital receptor...</option>
-                                {% for h in hospitales %}
-                                <option value="{{ h.id }}">{{ h.nombre }} ({{ h.get_tipo_display|default:"General" }})</option>
-                                {% endfor %}
-                            </select>
-                        </div>
+                        <div class="row g-5">
+                            <div class="col-lg-7">
+                                <h5 class="section-title mb-4">
+                                    <span class="title-icon"><i class="fas fa-file-signature"></i></span>
+                                    EXPEDIENTE DIGITAL (D7)
+                                </h5>
+                                
+                                <div class="vstack gap-3">
+                                    <a href="{% url 'hospital:formulario_d7' paciente.id %}" class="doc-card-premium">
+                                        <div class="d-flex align-items-center">
+                                            <div class="doc-icon-box bg-warning-soft">
+                                                <i class="fas fa-file-medical text-warning"></i>
+                                            </div>
+                                            <div class="ms-3 flex-grow-1">
+                                                <h6 class="mb-0 fw-bold">Formulario D7 - Referencia</h6>
+                                                <small class="text-muted">Diagnóstico y Justificación</small>
+                                            </div>
+                                            <div class="status-badge status-pending">PENDIENTE</div>
+                                        </div>
+                                    </a>
 
-                        <div class="mb-4">
-                            <label class="form-label fw-bold"><i class="fas fa-exclamation-triangle me-2 text-warning"></i>Prioridad del Traslado</label>
-                            <div class="d-flex gap-3">
-                                <input type="radio" class="btn-check" name="prioridad" id="prio1" value="ALTA" autocomplete="off">
-                                <label class="btn btn-outline-danger flex-fill rounded-pill" for="prio1">ALTA</label>
+                                    <a href="{% url 'hospital:formulario_d7a' paciente.id %}" class="doc-card-premium success">
+                                        <div class="d-flex align-items-center">
+                                            <div class="doc-icon-box bg-success-soft">
+                                                <i class="fas fa-check-double text-success"></i>
+                                            </div>
+                                            <div class="ms-3 flex-grow-1">
+                                                <h6 class="mb-0 fw-bold">Formulario D7a - Consentimiento</h6>
+                                                <small class="text-muted">Firmado por familiar/paciente</small>
+                                            </div>
+                                            <div class="status-badge status-done">COMPLETO</div>
+                                        </div>
+                                    </a>
 
-                                <input type="radio" class="btn-check" name="prioridad" id="prio2" value="MEDIA" autocomplete="off" checked>
-                                <label class="btn btn-outline-warning flex-fill rounded-pill" for="prio2">MEDIA</label>
+                                    <a href="{% url 'hospital:formulario_d7b' paciente.id %}" class="doc-card-premium">
+                                        <div class="d-flex align-items-center">
+                                            <div class="doc-icon-box bg-danger-soft">
+                                                <i class="fas fa-clipboard-list text-danger"></i>
+                                            </div>
+                                            <div class="ms-3 flex-grow-1">
+                                                <h6 class="mb-0 fw-bold">Formulario D7b - Transferencia</h6>
+                                                <small class="text-muted">Resumen de traslado en curso</small>
+                                            </div>
+                                            <div class="status-badge status-locked"><i class="fas fa-lock me-1"></i>BLOC</div>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
 
-                                <input type="radio" class="btn-check" name="prioridad" id="prio3" value="BAJA" autocomplete="off">
-                                <label class="btn btn-outline-success flex-fill rounded-pill" for="prio3">BAJA</label>
+                            <div class="col-lg-5">
+                                <h5 class="section-title mb-4">
+                                    <span class="title-icon"><i class="fas fa-heartbeat"></i></span>
+                                    NIVEL DE PRIORIDAD
+                                </h5>
+                                <div class="triage-selector d-flex p-1 bg-light rounded-4 mb-4">
+                                    <input type="radio" name="prioridad" id="p_crit" class="btn-check" value="ALTA">
+                                    <label class="btn triage-btn t-danger flex-fill" for="p_crit">CRÍTICO</label>
+                                    
+                                    <input type="radio" name="prioridad" id="p_urg" class="btn-check" value="MEDIA" checked>
+                                    <label class="btn triage-btn t-warning flex-fill" for="p_urg">URGENTE</label>
+                                    
+                                    <input type="radio" name="prioridad" id="p_est" class="btn-check" value="BAJA">
+                                    <label class="btn triage-btn t-success flex-fill" for="p_est">ESTABLE</label>
+                                </div>
+
+                                <h5 class="section-title mb-4">
+                                    <span class="title-icon"><i class="fas fa-truck-medical"></i></span>
+                                    CONFIGURACIÓN DE TRASLADO
+                                </h5>
+                                <div class="configuracion-traslado">
+                                    <div class="mt-4">
+                                        {% if paciente.ambulancia_asignada %}
+                                            <div class="card border-success bg-success-subtle shadow-sm mb-3">
+                                                <div class="card-body d-flex align-items-center p-2">
+                                                    <div class="bg-success text-white rounded p-2 me-3">
+                                                        <i class="fas fa-ambulance fa-lg"></i>
+                                                    </div>
+                                                    <div class="flex-grow-1">
+                                                        <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.65rem;">Unidad Asignada</small>
+                                                        <span class="fw-bold text-dark">{{ paciente.ambulancia_asignada.placa }}</span>
+                                                    </div>
+                                                    <a href="{% url 'hospital:ambulancias' %}?paciente_id={{ paciente.id }}" 
+                                                       class="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold">
+                                                        Cambiar
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        {% else %}
+                                            <a href="{% url 'hospital:ambulancias' %}?paciente_id={{ paciente.id }}" 
+                                               class="btn btn-warning w-100 shadow-sm d-flex align-items-center justify-content-center gap-2 fw-bold py-2" 
+                                               id="btn-asignar-ambulancia">
+                                                <i class="fas fa-ambulance"></i> 
+                                                ASIGNAR AMBULANCIA DE ORIGEN
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="bg-dark-soft p-4 rounded-4 border">
+                                    <div class="mb-3">
+                                        <label class="small fw-bold text-secondary mb-2">TIPO DE SOPORTE VITAL</label>
+                                        <select class="form-select border-0 shadow-sm rounded-3">
+                                            <option>ALS - Soporte Vital Avanzado</option>
+                                            <option>BLS - Soporte Vital Básico</option>
+                                            <option>Traslado Simple / Administrativo</option>
+                                        </select>
+                                    </div>
+                                    <div class="vstack gap-2 mt-4">
+                                        <div class="form-check form-switch custom-switch">
+                                            <input class="form-check-input" type="checkbox" id="ox">
+                                            <label class="form-check-label small fw-bold" for="ox">OXÍGENO CONTINUO</label>
+                                        </div>
+                                        <div class="form-check form-switch custom-switch text-info">
+                                            <input class="form-check-input" type="checkbox" id="mon" checked>
+                                            <label class="form-check-label small fw-bold" for="mon">MONITOR MULTIPARAMÉTRICO</label>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="mb-4">
-                            <label class="form-label fw-bold"><i class="fas fa-notes-medical me-2 text-primary"></i>Motivo del Traslado</label>
-                            <textarea name="motivo" class="form-control rounded-4 border-2" rows="4" 
-                                placeholder="Describa la condición clínica y por qué requiere el traslado..." required></textarea>
-                        </div>
-
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary btn-lg rounded-pill py-3 fw-bold shadow">
-                                <i class="fas fa-paper-plane me-2"></i>Enviar Solicitud a la Red
-                            </button>
-                            <a href="javascript:history.back()" class="btn btn-light btn-lg rounded-pill py-3 text-muted">
-                                Cancelar
-                            </a>
+                        <div class="mt-5 pt-4 border-top">
+                            <div class="row align-items-center">
+                                <div class="col-lg-7 mb-4 mb-lg-0">
+                                    <label class="form-label fw-bold text-dark small"><i class="fas fa-map-marker-alt me-1 text-primary"></i> HOSPITAL DE DESTINO RECEPTOR</label>
+                                    <div class="input-group">
+                                        <select name="hospital_destino" class="form-select form-select-lg border-2 rounded-pill px-4" required>
+                                            <option value="" selected disabled>Buscar hospital en la red...</option>
+                                            {% for h in hospitales %}
+                                            <option value="{{ h.id }}">{{ h.nombre }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-lg-5 text-end">
+                                    <div class="d-flex gap-2">
+                                        <button type="button" onclick="history.back()" class="btn btn-light btn-lg rounded-pill flex-fill fw-bold text-muted">CANCELAR</button>
+                                        <button type="submit" class="btn btn-primary btn-lg rounded-pill flex-fill fw-bold shadow-blue">
+                                            <i class="fas fa-paper-plane me-2"></i>DESPACHAR TRASLADO
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </form>
                 </div>
             </div>
-            
-            <div class="text-center mt-4">
-                <small class="text-muted">
-                    <i class="fas fa-info-circle me-1"></i> Al confirmar, la cama actual quedará libre para desinfección.
-                </small>
-            </div>
+            <p class="text-center mt-4 text-muted small fw-bold">© 2026 SISTEMA DE GESTIÓN HOSPITALARIA UNIFICADO | POTOSÍ - BOLIVIA</p>
         </div>
     </div>
 </div>
 
 <style>
-    body { background-color: #f8fafc; }
-    .form-select:focus, .form-control:focus {
-        border-color: #0d6efd;
-        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.1);
+    :root {
+        --primary-blue: #0061ff;
+        --dark-bg: #1a1c1e;
+        --soft-bg: #f8f9fa;
+        --info-blue: #00d2ff;
     }
-    .btn-check:checked + .btn-outline-danger { background-color: #dc3545; color: white; }
-    .btn-check:checked + .btn-outline-warning { background-color: #ffc107; color: black; }
-    .btn-check:checked + .btn-outline-success { background-color: #198754; color: white; }
+
+    body { background-color: #edf1f7; font-family: 'Inter', sans-serif; }
+
+    .main-card { border-radius: 30px; overflow: hidden; }
+
+    /* Header */
+    .bg-dark-premium { background: linear-gradient(135deg, #1a1c1e 0%, #2d3436 100%); }
+    .back-btn:hover { background-color: white; color: var(--dark-bg); }
+
+    /* Banner */
+    .patient-banner { background-color: #ffffff; border: 1px solid #e3e8ef; }
+    .avatar-circle {
+        width: 70px; height: 70px; 
+        background: linear-gradient(45deg, var(--primary-blue), var(--info-blue));
+        border-radius: 20px; display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 10px 20px rgba(0, 97, 255, 0.2);
+    }
+    .badge-custom {
+        padding: 6px 16px; border-radius: 10px; font-size: 0.75rem; font-weight: 700;
+    }
+    .bg-primary-soft { background-color: #e6f0ff; color: var(--primary-blue); }
+    .bg-secondary-soft { background-color: #f1f3f5; color: #495057; }
+
+    /* Secciones */
+    .section-title {
+        font-size: 0.85rem; letter-spacing: 1px; color: #adb5bd; font-weight: 800; display: flex; align-items: center;
+    }
+    .title-icon {
+        width: 30px; height: 30px; background: white; border-radius: 8px; 
+        display: inline-flex; align-items: center; justify-content: center; margin-right: 10px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05); color: var(--primary-blue);
+    }
+
+    /* Tarjetas de Documentos */
+    .doc-card-premium {
+        display: block; padding: 1.25rem; border: 1px solid #e3e8ef; border-radius: 18px;
+        background: white; text-decoration: none; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .doc-card-premium:hover {
+        transform: translateY(-4px); border-color: var(--primary-blue); box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+    }
+    .doc-icon-box {
+        width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+    }
+    .bg-warning-soft { background-color: #fff9db; }
+    .bg-success-soft { background-color: #ebfbee; }
+    .bg-danger-soft  { background-color: #fff5f5; }
+
+    /* Badges de Estado */
+    .status-badge { font-size: 0.65rem; font-weight: 900; padding: 4px 12px; border-radius: 6px; }
+    .status-pending { background-color: #fff3bf; color: #f08c00; }
+    .status-done { background-color: #d3f9d8; color: #2b8a3e; }
+    .status-locked { background-color: #f1f3f5; color: #adb5bd; }
+
+    /* Triage Selector */
+    .triage-btn {
+        border: none; border-radius: 12px !important; font-weight: 800; font-size: 0.75rem; 
+        padding: 12px; transition: 0.3s; color: #adb5bd;
+    }
+    .btn-check:checked + .t-danger { background-color: #ff5252; color: white; box-shadow: 0 5px 15px rgba(255,82,82,0.4); }
+    .btn-check:checked + .t-warning { background-color: #ffd740; color: #5d4037; box-shadow: 0 5px 15px rgba(255,215,64,0.4); }
+    .btn-check:checked + .t-success { background-color: #69f0ae; color: #1b5e20; box-shadow: 0 5px 15px rgba(105,240,174,0.4); }
+
+    /* Botón Final */
+    .shadow-blue { box-shadow: 0 10px 25px rgba(0, 97, 255, 0.4); }
+    .fw-extrabold { font-weight: 900; }
 </style>
 {% endblock %}

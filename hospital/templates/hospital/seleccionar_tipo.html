@@ -1,0 +1,47 @@
+{% extends 'superadmi/base.html' %}
+{% block content %}
+<div class="container py-5">
+    <h2 class="text-center mb-5" style="color: #1a4e8a; font-weight: bold; text-transform: uppercase;">
+        Registro de Incidencias CRUEM - Potosí
+    </h2>
+    
+    <div class="row">
+        <div class="col-md-3">
+            <a href="{% url 'hospital:registrar_incidencia' 'PRE' %}" class="card text-center shadow-sm p-4 border-primary" style="text-decoration: none; transition: 0.3s;">
+                <div class="card-body">
+                    <i class="fas fa-ambulance fa-4x text-primary mb-3"></i>
+                    <h6 class="font-weight-bold text-dark">1 (338)<br>PREHOSPITALARIA</h6>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="{% url 'hospital:registrar_incidencia' 'TRA' %}" class="card text-center shadow-sm p-4 border-info" style="text-decoration: none;">
+                <div class="card-body">
+                    <i class="fas fa-shipping-fast fa-4x text-info mb-3"></i>
+                    <h6 class="font-weight-bold text-dark">2 (110)<br>TRASLADO</h6>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="{% url 'hospital:registrar_incidencia' 'REF' %}" class="card text-center shadow-sm p-4 border-success" style="text-decoration: none;">
+                <div class="card-body">
+                    <i class="fas fa-hospital-user fa-4x text-success mb-3"></i>
+                    <h6 class="font-weight-bold text-dark">3 (167)<br>REFERENCIA</h6>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="{% url 'hospital:registrar_incidencia' 'EVE' %}" class="card text-center shadow-sm p-4 border-warning" style="text-decoration: none;">
+                <div class="card-body">
+                    <i class="fas fa-running fa-4x text-warning mb-3"></i>
+                    <h6 class="font-weight-bold text-dark">4 EVENTO<br>DEPORTIVO</h6>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card:hover { transform: translateY(-10px); box-shadow: 0 10px 20px rgba(0,0,0,0.2) !important; }
+</style>
+{% endblock %}

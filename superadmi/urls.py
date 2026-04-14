@@ -24,7 +24,7 @@ urlpatterns = [
     path('usuarios/registrar/', views.registrar_personal, name='registrar_personal'),
     path('usuarios/editar/<int:pk>/', views.editar_usuario, name='editar_usuario'),
     path('usuarios/eliminar/<int:pk>/', views.eliminar_usuario, name='eliminar_usuario'),
-    
+    path('usuarios/desactivar/<int:pk>/', views.desactivar_usuario, name='desactivar_usuario'),
     # Roles y Especialidades
     path('roles/', views.listar_roles, name='listar_roles'),
     path('especialidades/', views.listar_especialidades, name='listar_especialidades'),
@@ -35,7 +35,7 @@ urlpatterns = [
     path('configuracion/', views.configuracion_sistema, name='configuracion_sistema'),
 
     # Pacientes y Camas
-    path('pacientes/', views.listar_pacientes, name='listar_pacientes'),
+    ##path('pacientes/', views.listar_pacientes, name='listar_pacientes'),
     path('crear-camas-prueba/', views.crear_camas_prueba, name='crear_camas_prueba'),
     
     # Gestión de Capacidades (HospitalEspecialidad)

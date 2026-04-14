@@ -48,6 +48,7 @@
             display: flex;
             align-items: center;
             transition: 0.3s;
+            font-size: 0.95rem;
         }
 
         .nav-item a:hover, .nav-item.active a {
@@ -56,7 +57,7 @@
             border-left: 4px solid var(--primary-orange);
         }
 
-        .nav-item i { margin-right: 15px; width: 20px; }
+        .nav-item i { margin-right: 15px; width: 20px; text-align: center; }
 
         .main-wrapper { margin-left: var(--sidebar-width); min-height: 100vh; }
 
@@ -81,10 +82,20 @@
         .avatar-circle {
             width: 35px; height: 35px; background: #f1f5f9;
             border-radius: 50%; display: flex; align-items: center;
-            justify-content: center; font-weight: bold;
+            justify-content: center; font-weight: bold; color: var(--dark-blue);
         }
 
-        .logout-icon { color: #ef4444; cursor: pointer; background: none; border: none; }
+        .logout-icon { color: #ef4444; cursor: pointer; background: none; border: none; font-size: 1.1rem; }
+        
+        /* Badges de alerta en el menú si es necesario */
+        .nav-badge {
+            background: var(--primary-orange);
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: auto;
+        }
     </style>
 </head>
 <body>
@@ -94,58 +105,87 @@
             <h4 style="color: var(--primary-orange); font-weight: 800; margin: 0;">+ HOSPITAL</h4>
         </div>
         <ul class="nav-menu">
-            <li class="nav-item {% if 'dashboard' in request.path or request.path == '/superadmin/' %}active{% endif %}">
+            <li class="nav-item {% if request.path == '/superadmin/' %}active{% endif %}">
                 <a href="{% url 'superadmin:dashboard_superadmin' %}"><i class="fas fa-home"></i> Inicio</a>
             </li>
+            
             <li class="nav-item {% if 'hospitales' in request.path %}active{% endif %}">
                 <a href="{% url 'superadmin:listar_hospitales' %}"><i class="fas fa-hospital"></i> Hospitales</a>
             </li>
-            <li class="nav-item {% if 'usuarios' in request.path or 'registrar_personal' in request.path %}active{% endif %}">
+
+            <li class="nav-item {% if 'pacientes' in request.path %}active{% endif %}">
+                <a href="{% url 'hospital:lista_pacientes' %}"><i class="fas fa-user-injured"></i> Pacientes</a>
+            </li>
+
+            <li class="nav-item {% if 'usuarios' in request.path %}active{% endif %}">
                 <a href="{% url 'superadmin:listar_usuarios' %}"><i class="fas fa-user-md"></i> Personal</a>
             </li>
+
             <li class="nav-item {% if 'auditoria' in request.path %}active{% endif %}">
                 <a href="{% url 'superadmin:auditoria' %}"><i class="fas fa-history"></i> Auditoría</a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'hospital:monitor_disponibilidad' %}" class="nav-link text-white">
+                    <i class="fas fa-calendar-alt mr-2"></i>
+                    <span>Historial (Calendario)</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'hospital:seleccionar_tipo' %}"> 
+                    <i class="fas fa-plus"></i> Registrar Incidencia 
+                </a>
             </li>
         </ul>
     </div>
 
     <div class="main-wrapper">
         <header class="header-top">
-            <div class="header-left-info">
+            <div class="d-flex align-items-center">
                 <span class="gadp-tag">GADP</span>
                 <div>
                     <div style="font-weight: 700; color: #33475b; font-size: 15px;">Panel de Control</div>
-                    <div style="font-size: 11px; color: #94a3b8;">
-                        {% if 'hospitales' in request.path %}Hospitales{% elif 'usuarios' in request.path %}Personal{% else %}Inicio{% endif %}
+                    <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">
+                        {% if 'hospitales' in request.path %}Gestión de Centros
+                        {% elif 'pacientes' in request.path %}Admisión y Triaje
+                        {% elif 'usuarios' in request.path %}Recursos Humanos
+                        {% else %}Dashboard Principal{% endif %}
                     </div>
                 </div>
             </div>
 
             <div class="user-profile">
-                {% if messages %}
-                    {% for message in messages %}
-                        <small class="text-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} me-3">
-                            {{ message }}
-                        </small>
-                    {% endfor %}
-                {% endif %}
-                
-                <div style="text-align: right; line-height: 1;">
+                <div style="text-align: right; line-height: 1.2;">
                     <span style="display: block; font-weight: 700; font-size: 13px;">{{ user.username|capfirst }}</span>
-                    <span style="font-size: 10px; color: #94a3b8;">Administrador</span>
+                    <span style="font-size: 10px; color: #94a3b8;">
+                        {% if user.is_superuser %}Super Admin{% else %}Personal Médico{% endif %}
+                    </span>
                 </div>
                 <div class="avatar-circle">{{ user.username|slice:":1"|upper }}</div>
                 <form action="{% url 'superadmin:logout' %}" method="post" style="margin:0;">
                     {% csrf_token %}
-                    <button type="submit" class="logout-icon"><i class="fas fa-power-off"></i></button>
+                    <button type="submit" class="logout-icon" title="Cerrar Sesión"><i class="fas fa-power-off"></i></button>
                 </form>
             </div>
         </header>
 
-        <div style="padding: 30px;">
+        <div class="container-fluid mt-3 px-4">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show shadow-sm border-0" role="alert" style="border-radius: 10px;">
+                        <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+
+        <div style="padding: 10px 30px 30px 30px;">
             {% block content %}
             {% endblock %}
         </div>
-        </div> <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-</html> 
+</html>

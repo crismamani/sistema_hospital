@@ -1,60 +1,51 @@
 {% extends 'superadmi/base.html' %}
 
 {% block content %}
-<div class="container-fluid py-4" style="background-color: #f8fafc; min-height: 100vh;">
+<div class="container-fluid py-4" style="background-color: #f4f7f6; min-height: 100vh;">
     
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm border-0 mb-4" role="alert" style="border-radius: 15px;">
+                <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %} me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h3 class="fw-bold text-dark m-0"><i class="fas fa-users-cog text-warning me-2"></i>Gestión de Personal de Salud</h3>
-            <p class="text-muted small mb-0">Panel operativo con sincronización de estado en tiempo real.</p>
+            <h3 class="fw-bold text-dark m-0"><i class="fas fa-users-cog text-warning me-2"></i>Gestión Operativa</h3>
+            <p class="text-muted small">Control integral de personal, roles, ubicación y seguridad.</p>
         </div>
-        <button class="btn btn-warning text-white fw-bold px-4 rounded-pill shadow-sm" data-bs-toggle="modal" data-bs-target="#modalRegistro">
-            <i class="fas fa-plus me-2"></i> Nuevo Personal
+        <button class="btn btn-warning text-white fw-bold px-4 rounded-pill shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNuevo">
+            <i class="fas fa-plus-circle me-1"></i> Nuevo Personal
         </button>
     </div>
 
-    <div class="row g-3 mb-4">
+    <div class="row g-3 mb-4 text-center">
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm p-3 text-center" onclick="setChipFilter('all', this)" style="cursor:pointer; border-radius:15px;">
-                <div class="text-primary mb-1"><i class="fas fa-users fa-lg"></i></div>
-                <h6 class="text-muted extra-small fw-bold">PERSONAL TOTAL</h6>
-                <h3 class="fw-bold m-0" id="counterTotal">{{ usuarios.count }}</h3>
+            <div class="card border-0 shadow-sm p-3" style="border-radius: 15px; border-bottom: 4px solid #0d6efd !important;">
+                <p class="text-muted small fw-bold mb-1 text-uppercase">Total Personal</p>
+                <h2 class="fw-bold m-0">{{ activos_count|add:cirugia_count }}</h2>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm p-3 text-center" onclick="setChipFilter('En Servicio', this)" style="cursor:pointer; border-radius:15px;">
-                <div class="text-success mb-1"><i class="fas fa-user-check fa-lg"></i></div>
-                <h6 class="text-success extra-small fw-bold">EN SERVICIO</h6>
-                <h3 class="fw-bold m-0 text-success">{{ activos_count }}</h3>
+            <div class="card border-0 shadow-sm p-3" style="border-radius: 15px; border-bottom: 4px solid #198754 !important;">
+                <p class="text-muted small fw-bold mb-1 text-uppercase">En Servicio</p>
+                <h2 class="fw-bold m-0 text-success">{{ activos_count }}</h2>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm p-3 text-center" style="border-radius:15px;">
-                <div class="text-info mb-1"><i class="fas fa-hospital fa-lg"></i></div>
-                <h6 class="text-info extra-small fw-bold">SEDES CON PERSONAL</h6>
-                <h3 class="fw-bold m-0 text-info">{{ sedes_count }}</h3>
+            <div class="card border-0 shadow-sm p-3" style="border-radius: 15px; border-bottom: 4px solid #0dcaf0 !important;">
+                <p class="text-muted small fw-bold mb-1 text-uppercase">Sedes</p>
+                <h2 class="fw-bold m-0 text-info">{{ sedes_count }}</h2>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm p-3 text-center" onclick="setChipFilter('En Cirugía', this)" style="cursor:pointer; border-radius:15px; background-color: #fff5f5;">
-                <div class="text-danger mb-1"><i class="fas fa-procedures fa-lg"></i></div>
-                <h6 class="text-danger extra-small fw-bold">EN CIRUGÍA / OCUPADOS</h6>
-                <h3 class="fw-bold m-0 text-danger">{{ cirugia_count }}</h3>
-            </div>
-        </div>
-    </div>
-
-    <div class="card border-0 shadow-sm mb-4" style="border-radius: 15px;">
-        <div class="card-body p-3 d-flex justify-content-between align-items-center">
-            <div class="input-group w-50 bg-light rounded-pill px-3">
-                <span class="input-group-text bg-transparent border-0"><i class="fas fa-search text-muted"></i></span>
-                <input type="text" id="searchInput" class="form-control border-0 bg-transparent shadow-none" placeholder="Buscar por nombre, ID o sede...">
-            </div>
-            <div class="d-flex gap-2">
-                <button class="badge rounded-pill bg-warning border-0 p-2 px-3 filter-chip active" onclick="setChipFilter('all', this)">Todos</button>
-                <button class="badge rounded-pill bg-light text-dark border p-2 px-3 filter-chip" onclick="setChipFilter('DOCTOR', this)">Doctores</button>
-                <button class="badge rounded-pill bg-light text-dark border p-2 px-3 filter-chip" onclick="setChipFilter('En Servicio', this)">En Servicio</button>
-                <button class="badge rounded-pill bg-light text-dark border p-2 px-3 filter-chip" onclick="setChipFilter('En Cirugía', this)">En Cirugía</button>
+            <div class="card border-0 shadow-sm p-3" style="border-radius: 15px; border-bottom: 4px solid #dc3545 !important;">
+                <p class="text-muted small fw-bold mb-1 text-uppercase">En Cirugía</p>
+                <h2 class="fw-bold m-0 text-danger">{{ cirugia_count }}</h2>
             </div>
         </div>
     </div>
@@ -62,80 +53,111 @@
     <div class="card border-0 shadow-sm" style="border-radius: 20px; overflow: hidden;">
         <div class="table-responsive">
             <table class="table align-middle mb-0">
-                <thead class="bg-light text-muted small fw-bold text-uppercase">
+                <thead class="bg-white text-muted small fw-bold text-uppercase border-bottom">
                     <tr>
-                        <th class="ps-4">Información del Personal</th>
-                        <th>Especialidad / Sede</th>
+                        <th class="ps-4">Especialista / Rol</th>
+                        <th>Sede / Especialidad</th>
                         <th>Estado</th>
-                        <th>Turno Actual</th>
-                        <th class="text-center">Gestión</th>
+                        <th>Turno</th>
+                        <th class="text-center">Acciones</th>
                     </tr>
                 </thead>
-                <tbody id="userTableBody">
+                <tbody>
                     {% for u in usuarios %}
-                    <tr class="border-bottom clickable-row" 
-                        data-estado="{% if u.estado %}En Servicio{% else %}En Cirugía{% endif %}"
-                        data-rol="{{ u.rol.nombre|upper }}"
-                        data-bs-toggle="collapse" data-bs-target="#expediente_{{ u.id }}" style="cursor: pointer;">
-                        
+                    <tr class="bg-white border-bottom">
                         <td class="ps-4 py-3">
                             <div class="d-flex align-items-center">
-                                <div class="avatar-box me-3">{{ u.nombre_completo|slice:":1"|upper }}</div>
+                                <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; font-weight: bold;">
+                                    {{ u.nombre_completo|first|upper }}
+                                </div>
                                 <div>
-                                    <div class="fw-bold text-dark">{{ u.nombre_completo|title }}</div>
-                                    <div class="text-muted extra-small"><i class="fas fa-envelope me-1"></i>{{ u.email }}</div>
+                                    <div class="fw-bold text-dark">{{ u.nombre_completo }}</div>
+                                    <span class="badge bg-dark extra-small text-uppercase" style="font-size: 0.65rem;">{{ u.rol.nombre|default:"Doctor" }}</span>
                                 </div>
                             </div>
                         </td>
                         <td>
-                            <span class="badge bg-primary-subtle text-primary mb-1">{{ u.rol.nombre|upper }}</span>
-                            <div class="small text-muted"><i class="fas fa-stethoscope text-warning me-1"></i>{{ u.especialidad.nombre|default:"General" }}</div>
+                            <div class="small fw-bold text-dark">{{ u.hospital.nombre|default:"Sede Central" }}</div>
+                            <span class="badge bg-light text-dark border extra-small">{{ u.especialidad.nombre|default:"General" }}</span>
                         </td>
                         <td>
                             {% if u.estado %}
-                                <span class="text-success fw-bold small"><i class="fas fa-circle me-1" style="font-size: 8px;"></i> En Servicio</span>
+                            <span class="badge rounded-pill bg-success bg-opacity-10 text-success border border-success px-3">Disponible</span>
                             {% else %}
-                                <span class="text-danger fw-bold small"><i class="fas fa-circle me-1" style="font-size: 8px;"></i> En Cirugía</span>
+                            <span class="badge rounded-pill bg-danger bg-opacity-10 text-danger border border-danger px-3">Ocupado</span>
                             {% endif %}
                         </td>
                         <td>
-                            <div class="small fw-bold text-dark"><i class="far fa-calendar-alt text-primary me-1"></i>{{ u.turno|default:"Lunes a Viernes" }}</div>
-                            <div class="text-muted extra-small">08:00 - 14:00</div>
+                            <div class="text-primary small fw-bold">
+                                <i class="far fa-clock me-1"></i> {{ u.turno_asignado|default:"Sin asignar" }}
+                            </div>
                         </td>
                         <td class="text-center">
-                            <button class="btn btn-sm btn-light rounded-circle shadow-sm"><i class="fas fa-chevron-down text-muted"></i></button>
+                            <div class="d-flex justify-content-center gap-2">
+                                <button class="btn btn-sm btn-outline-warning rounded-pill px-3 fw-bold" data-bs-toggle="collapse" data-bs-target="#gestionar_{{ u.id }}">
+                                    <i class="fas fa-cog me-1"></i> Gestionar
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger rounded-pill px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#confirmarEliminar{{ u.id }}">
+                                    <i class="fas fa-trash-alt me-1"></i>
+                                </button>
+                            </div>
                         </td>
                     </tr>
-                    
-                    <tr class="collapse" id="expediente_{{ u.id }}">
-                        <td colspan="5" class="bg-light p-0 border-0">
-                            <div class="p-4 mx-3 my-2 bg-white rounded-3 shadow-sm border-start border-warning border-4">
+
+                    <tr class="collapse" id="gestionar_{{ u.id }}">
+                        <td colspan="5" class="bg-light p-3">
+                            <div class="bg-white p-4 rounded-4 shadow-sm border-start border-warning border-5 mx-3 text-start">
                                 <div class="row align-items-center">
-                                    <div class="col-md-4">
-                                        <h6 class="extra-small fw-bold text-muted text-uppercase mb-2">Ubicación de Trabajo</h6>
-                                        <p class="mb-1 small"><strong>Sede:</strong> {{ u.hospital.nombre|default:"Sede Central" }}</p>
-                                        <p class="mb-1 small"><strong>ID Personal:</strong> #{{ u.id|add:1000 }}</p>
+                                    <div class="col-md-2 text-center border-end">
+                                        <i class="fas fa-user-shield fa-4x text-warning mb-2"></i>
+                                        <h6 class="fw-bold mb-0 text-uppercase">{{ u.username }}</h6>
+                                        <span class="badge bg-info text-dark extra-small">{{ u.rol.nombre|upper }}</span>
                                     </div>
-                                    <div class="col-md-5">
-                                        <h6 class="extra-small fw-bold text-muted text-uppercase mb-2">Desempeño y Carga</h6>
-                                        <div class="d-flex justify-content-between mb-1">
-                                            <span class="extra-small text-muted">Productividad</span>
-                                            <span class="extra-small fw-bold text-primary">85%</span>
+                                    <div class="col-md-6 px-4">
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <p class="mb-1 small"><strong><i class="fas fa-envelope me-2 text-warning"></i>Email:</strong> {{ u.email }}</p>
+                                                <p class="mb-1 small"><strong><i class="fas fa-phone me-2 text-warning"></i>Teléfono:</strong> {{ u.telefono|default:"No asignado" }}</p>
+                                            </div>
+                                            <div class="col-6">
+                                                <p class="mb-1 small"><strong><i class="fas fa-map-marker-alt me-2 text-warning"></i>Ciudad:</strong> {{ u.ciudad|default:"No registrado" }}</p>
+                                                <p class="mb-1 small"><strong><i class="fas fa-home me-2 text-warning"></i>Dirección:</strong> {{ u.direccion|default:"No registrado" }}</p>
+                                            </div>
                                         </div>
-                                        <div class="progress" style="height: 6px;">
-                                            <div class="progress-bar bg-primary" style="width: 85%"></div>
-                                        </div>
-                                        <p class="mt-2 extra-small text-muted">8 Pacientes atendidos el día de hoy.</p>
                                     </div>
-                                    <div class="col-md-3 text-end">
-                                        <button onclick="abrirModalEditar('{{ u.id }}', '{{ u.nombre_completo|escapejs }}', '{{ u.email|escapejs }}', '{{ u.hospital.id|default:'' }}', '{{ u.especialidad.id|default:'' }}', '{{ u.estado|yesno:'true,false' }}', '{{ u.turno }}')" class="btn btn-primary btn-sm rounded-pill px-4 shadow-sm">
-                                            <i class="fas fa-edit me-1"></i> Editar / Traspaso
-                                        </button>
+                                    <div class="col-md-4 text-end">
+                                        <div class="d-grid gap-2">
+                                            <button onclick="abrirModalEditar('{{ u.id }}', '{{ u.nombre_completo|escapejs }}', '{{ u.email|escapejs }}', '{{ u.estado|yesno:'true,false' }}', '{{ u.turno_asignado|escapejs }}', '{{ u.telefono|default:''|escapejs }}', '{{ u.ciudad|default:''|escapejs }}', '{{ u.direccion|default:''|escapejs }}', '{{ u.rol.id }}', '{{ u.hospital.id }}', '{{ u.especialidad.id }}')" class="btn btn-primary btn-sm rounded-pill fw-bold shadow-sm">
+                                                <i class="fas fa-edit me-1"></i> Editar Perfil Completo
+                                            </button>
+                                            <a href="{% url 'superadmin:desactivar_usuario' pk=u.id %}" class="btn btn-outline-danger btn-sm rounded-pill fw-bold" onclick="return confirm('¿Está seguro de desactivar a este usuario?')">
+                                                <i class="fas fa-user-slash me-1"></i> Desactivar
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </td>
                     </tr>
+
+                    <div class="modal fade" id="confirmarEliminar{{ u.id }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-sm">
+                            <div class="modal-content border-0 shadow">
+                                <div class="modal-body p-4 text-center">
+                                    <div class="text-danger mb-3"><i class="fas fa-exclamation-triangle fa-3x"></i></div>
+                                    <h5 class="fw-bold">¿Eliminar?</h5>
+                                    <p class="text-muted small">Borrarás a <strong>{{ u.nombre_completo }}</strong>.</p>
+                                    <div class="d-flex justify-content-center gap-2 mt-4">
+                                        <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">No</button>
+                                        <form action="{% url 'superadmin:eliminar_usuario' pk=u.id %}" method="POST">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger rounded-pill px-3">Eliminar</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     {% endfor %}
                 </tbody>
             </table>
@@ -143,124 +165,200 @@
     </div>
 </div>
 
-<div class="modal fade" id="modalEditar" tabindex="-1">
+<div class="modal fade" id="modalNuevo" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <form method="POST" id="formEditar" class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+        <form method="POST" action="{% url 'superadmin:registrar_personal' %}" class="modal-content border-0 shadow-lg" style="border-radius: 20px;" onsubmit="return validarContrasenas()">
             {% csrf_token %}
-            <div class="modal-header bg-dark text-white py-3 px-4 border-0">
-                <h5 class="modal-title fw-bold m-0"><i class="fas fa-user-edit text-warning me-2"></i>Editar Información de Personal</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            <div class="modal-header bg-warning text-dark py-3 border-0">
+                <h5 class="modal-title fw-bold m-0"><i class="fas fa-user-plus me-2"></i>Nuevo Especialista</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body p-4" style="background-color: #ffffff;">
+            <div class="modal-body p-4 text-start">
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label small fw-bold text-muted">Nombre</label>
-                        <input type="text" name="nombre_completo" id="edit_nombre" class="form-control rounded-3 border-light bg-light">
+                        <label class="small fw-bold">Nombre Completo</label>
+                        <input type="text" name="nombre_completo" class="form-control rounded-3" required>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label small fw-bold text-muted">Email Corporativo</label>
-                        <input type="email" name="email" id="edit_email" class="form-control rounded-3 border-light bg-light">
+                        <label class="small fw-bold">Email</label>
+                        <input type="email" name="email" class="form-control rounded-3" required>
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label small fw-bold text-muted">Sede / Hospital</label>
-                        <select name="hospital" id="edit_hospital" class="form-select rounded-3 border-light bg-light">
-                            {% for h in hospitales %}<option value="{{ h.id }}">{{ h.nombre }}</option>{% endfor %}
+                    <div class="col-md-6">
+                        <label class="small fw-bold">Hospital (Sede)</label>
+                        <select name="hospital" class="form-select rounded-3" required>
+                            <option value="">Seleccione Hospital</option>
+                            {% for h in hospitales %}
+                            <option value="{{ h.id }}">{{ h.nombre }}</option>
+                            {% endfor %}
                         </select>
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label small fw-bold text-muted">Especialidad</label>
-                        <select name="especialidad" id="edit_especialidad" class="form-select rounded-3 border-light bg-light">
-                            <option value="">Seleccione...</option>
-                            {% for e in especialidades %}<option value="{{ e.id }}">{{ e.nombre }}</option>{% endfor %}
+                    <div class="col-md-6">
+                        <label class="small fw-bold">Especialidad</label>
+                        <select name="especialidad" class="form-select rounded-3" required>
+                            <option value="">Seleccione Especialidad</option>
+                            {% for e in especialidades %}
+                            <option value="{{ e.id }}">{{ e.nombre }}</option>
+                            {% endfor %}
                         </select>
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label small fw-bold text-muted">Turno Actual</label>
-                        <select name="turno" id="edit_turno" class="form-select rounded-3 border-light bg-light">
-                            <option value="Mañana">Mañana (08:00 - 14:00)</option>
-                            <option value="Tarde">Tarde (14:00 - 20:00)</option>
-                            <option value="Noche">Noche (20:00 - 08:00)</option>
+                    <div class="col-md-6">
+                        <label class="small fw-bold">Rol</label>
+                        <select name="rol_administrativo" class="form-select rounded-3">
+                            {% for r in roles_list %}
+                            <option value="{{ r.id }}">{{ r.nombre }}</option>
+                            {% endfor %}
                         </select>
                     </div>
-                    <div class="col-md-12 mt-4">
-                        <div class="p-3 rounded-3" style="background-color: #fffbeb; border: 1px solid #fef3c7;">
-                            <label class="form-label small fw-bold text-warning-emphasis d-block mb-2">Estado Operativo en Tiempo Real</label>
-                            <select name="estado" id="edit_estado" class="form-select border-0 shadow-none bg-transparent fw-bold">
-                                <option value="true">🟢 En Servicio (Disponible para pacientes)</option>
-                                <option value="false">🔴 En Cirugía (Ocupado / No disponible)</option>
-                            </select>
-                        </div>
+                    <div class="col-md-6">
+                        <label class="small fw-bold">Teléfono</label>
+                        <input type="text" name="telefono" class="form-control rounded-3">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="small fw-bold">Contraseña</label>
+                        <input type="password" name="password" id="reg_pass" class="form-control rounded-3" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="small fw-bold">Confirmar Contraseña</label>
+                        <input type="password" name="confirm_password" id="reg_pass_confirm" class="form-control rounded-3" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="small fw-bold">Turno</label>
+                        <select name="turno" class="form-select rounded-3">
+                            <option value="Mañana (08:00 - 14:00)">Mañana</option>
+                            <option value="Tarde (14:00 - 20:00)">Tarde</option>
+                            <option value="Noche (20:00 - 08:00)">Noche</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="small fw-bold">Estado</label>
+                        <select name="estado" class="form-select rounded-3">
+                            <option value="true">Disponible</option>
+                            <option value="false">Ocupado</option>
+                        </select>
                     </div>
                 </div>
             </div>
-            <div class="modal-footer bg-light border-0 py-3">
-                <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-toggle="modal">Cancelar</button>
-                <button type="submit" class="btn btn-warning text-white rounded-pill px-5 fw-bold shadow-sm">Guardar Cambios</button>
+            <div class="modal-footer border-0">
+                <button type="submit" class="btn btn-warning text-white w-100 rounded-pill fw-bold py-2 shadow-sm">Crear Cuenta</button>
             </div>
         </form>
     </div>
 </div>
 
-<style>
-    .avatar-box { width: 45px; height: 45px; background: #fbbf24; color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; }
-    .extra-small { font-size: 0.75rem; }
-    .filter-chip { transition: 0.2s; cursor: pointer; border: 1px solid #e2e8f0 !important; }
-    .filter-chip.active { background-color: #fbbf24 !important; color: white !important; border-color: #fbbf24 !important; }
-    .clickable-row:hover { background-color: #fffdf5; }
-</style>
+<div class="modal fade" id="modalEditar" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <form method="POST" id="formEditar" class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+            {% csrf_token %}
+            <div class="modal-header bg-primary text-white py-3 border-0">
+                <h5 class="modal-title fw-bold m-0"><i class="fas fa-user-edit me-2"></i>Actualizar Perfil</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4 text-start text-dark">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="small fw-bold">Nombre Completo</label>
+                        <input type="text" name="nombre_completo" id="edit_nombre" class="form-control rounded-3">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="small fw-bold">Email</label>
+                        <input type="email" name="email" id="edit_email" class="form-control rounded-3">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="small fw-bold">Hospital (Sede)</label>
+                        <select name="hospital" id="edit_hospital" class="form-select rounded-3">
+                            {% for h in hospitales %}
+                            <option value="{{ h.id }}">{{ h.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="small fw-bold">Especialidad</label>
+                        <select name="especialidad" id="edit_especialidad" class="form-select rounded-3">
+                            {% for e in especialidades %}
+                            <option value="{{ e.id }}">{{ e.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="small fw-bold">Rol Administrativo</label>
+                        <select name="rol_administrativo" id="edit_rol" class="form-select rounded-3">
+                            {% for r in roles_list %}
+                            <option value="{{ r.id }}">{{ r.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="small fw-bold">Teléfono</label>
+                        <input type="text" name="telefono" id="edit_telefono" class="form-control rounded-3">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="small fw-bold">Ciudad</label>
+                        <input type="text" name="ciudad" id="edit_ciudad" class="form-control rounded-3">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="small fw-bold">Dirección</label>
+                        <input type="text" name="direccion" id="edit_direccion" class="form-control rounded-3">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="small fw-bold">Turno</label>
+                        <select name="turno" id="edit_turno" class="form-select rounded-3">
+                            <option value="Mañana (08:00 - 14:00)">Mañana</option>
+                            <option value="Tarde (14:00 - 20:00)">Tarde</option>
+                            <option value="Noche (20:00 - 08:00)">Noche</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="small fw-bold">Estado Operativo</label>
+                        <select name="estado" id="edit_estado" class="form-select rounded-3">
+                            <option value="true">Disponible</option>
+                            <option value="false">Ocupado</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold py-2 shadow">Guardar Cambios</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 <script>
-let currentChip = "all";
-
-function setChipFilter(crit, btn) {
-    document.querySelectorAll('.filter-chip').forEach(c => {
-        c.classList.remove('active', 'bg-warning', 'text-white');
-        c.classList.add('bg-light', 'text-dark');
-    });
-    if(btn && btn.classList.contains('filter-chip')) btn.classList.add('active', 'bg-warning', 'text-white');
-    currentChip = crit;
-    updateFilters();
-}
-
-function updateFilters() {
-    const txt = document.getElementById('searchInput').value.toLowerCase();
-    const rows = document.querySelectorAll('#userTableBody tr.clickable-row');
-    let count = 0;
-
-    rows.forEach(row => {
-        const rowText = row.innerText.toLowerCase();
-        const rowEstado = row.getAttribute('data-estado');
-        const rowRol = row.getAttribute('data-rol');
-
-        const matchTxt = rowText.includes(txt);
-        let matchChip = (currentChip === "all") || 
-                        (currentChip === "DOCTOR" && rowRol.includes("DOCTOR")) || 
-                        (rowEstado === currentChip);
-
-        if (matchTxt && matchChip) {
-            row.style.display = "";
-            count++;
-        } else {
-            row.style.display = "none";
-            const next = row.nextElementSibling;
-            if(next && next.classList.contains('collapse')) next.classList.remove('show');
+    function abrirModalEditar(id, nombre, email, estado, turno, telf, ciu, dir, rolId, hospitalId, especialidadId) {
+        const form = document.getElementById('formEditar');
+        form.action = `/superadmin/usuarios/editar/${id}/`;
+        
+        document.getElementById('edit_nombre').value = nombre;
+        document.getElementById('edit_email').value = email;
+        document.getElementById('edit_estado').value = estado;
+        document.getElementById('edit_telefono').value = telf;
+        document.getElementById('edit_ciudad').value = ciu;
+        document.getElementById('edit_direccion').value = dir;
+        
+        // Asignación correcta por ID
+        document.getElementById('edit_rol').value = rolId;
+        document.getElementById('edit_hospital').value = hospitalId;
+        document.getElementById('edit_especialidad').value = especialidadId;
+        
+        const selTurno = document.getElementById('edit_turno');
+        const vTurno = turno.trim();
+        for(let i=0; i<selTurno.options.length; i++){
+            if(selTurno.options[i].value === vTurno){
+                selTurno.selectedIndex = i; break;
+            }
         }
-    });
-    document.getElementById('counterTotal').innerText = count;
-}
+        
+        new bootstrap.Modal(document.getElementById('modalEditar')).show();
+    }
 
-function abrirModalEditar(id, nombre, email, hosp, esp, estado, turno) {
-    const f = document.getElementById('formEditar');
-    f.action = `/superadmin/usuarios/editar/${id}/`;
-    document.getElementById('edit_nombre').value = nombre;
-    document.getElementById('edit_email').value = email;
-    document.getElementById('edit_hospital').value = hosp;
-    document.getElementById('edit_especialidad').value = esp;
-    document.getElementById('edit_estado').value = estado;
-    document.getElementById('edit_turno').value = (turno && turno !== 'None') ? turno : 'Mañana';
-    new bootstrap.Modal(document.getElementById('modalEditar')).show();
-}
-
-document.getElementById('searchInput').addEventListener('keyup', updateFilters);
+    function validarContrasenas() {
+        const pass = document.getElementById('reg_pass').value;
+        const confirm = document.getElementById('reg_pass_confirm').value;
+        if (pass !== confirm) {
+            alert("¡Las contraseñas no coinciden!");
+            return false;
+        }
+        return true;
+    }
 </script>
 {% endblock %}

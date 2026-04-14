@@ -1,0 +1,200 @@
+{% extends 'superadmi/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+  /* --- ESTILOS DE PANTALLA --- */
+  .form-container { display: flex; justify-content: center; padding: 20px; background: #e8e8e8; min-height: 100vh; }
+  .form1 { background: #fff; width: 650px; border: 1px solid #999; font-size: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); position: relative; padding: 10px; }
+  
+  .header-top { background: #cce6f4; border-bottom: 2px solid #1a4e8a; padding: 6px 10px; display: flex; align-items: center; justify-content: space-between; }
+  .title-text { font-size: 11px; font-weight: bold; color: #1a4e8a; text-align: center; flex: 1; text-transform: uppercase; }
+  .banner-reporte { background: #cce6f4; text-align: center; padding: 5px; font-size: 12px; font-weight: bold; color: #1a4e8a; border-bottom: 1px solid #1a4e8a; }
+  .banner-hospital { background: #1a4e8a; text-align: center; padding: 5px; font-size: 11px; font-weight: bold; color: #fff; text-transform: uppercase; }
+
+  .sub-section { border: 1px solid #1a4e8a; margin: 4px 0; background: #cce6f4; }
+  .sub-section-title { background: #1a4e8a; color: white; font-size: 9px; font-weight: bold; text-align: center; padding: 3px; text-transform: uppercase; }
+  .field-label { font-size: 8px; font-weight: bold; color: #1a4e8a; text-transform: uppercase; }
+  .field-value { background: white; border: 1px solid #aac9e0; height: 20px; font-size: 9px; padding: 2px 4px; width: 100%; }
+
+  /* Grilla de Camas */
+  .cama-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 5px; }
+  .cama-item { border: 1px solid #1a4e8a; background: white; padding: 3px; display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+  .cama-input { width: 30px; height: 18px; border: 1px solid #aac9e0; font-size: 10px; text-align: center; }
+  .label-cama { font-size: 8px; font-weight: bold; color: #1a4e8a; flex: 1; }
+
+  .no-print { padding: 15px; text-align: center; }
+  .save-btn { background: #1a4e8a; color: white; width: 250px; border: none; padding: 10px; font-weight: bold; cursor: pointer; margin: 5px; text-transform: uppercase; border-radius: 4px; }
+
+  /* ==========================================================
+     --- PROTOCOLO DE IMPRESIÓN "PÁGINA COMPLETA LIMPIA" ---
+     ========================================================== */
+  @media print {
+    /* Eliminar encabezados y pies de página del navegador (hora, url, correo) */
+    @page {
+      margin: 0.5cm; /* Margen mínimo para que no salga la info del sistema */
+    }
+
+    body * { visibility: hidden !important; }
+    .form-container, .form-container *, .form1, .form1 * { visibility: visible !important; }
+
+    .form-container {
+      position: absolute !important;
+      left: 0 !important;
+      top: 0 !important;
+      width: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      background: white !important;
+      display: block !important;
+    }
+
+    .form1 {
+      width: 98% !important; /* Ocupa casi todo el ancho de la hoja */
+      border: 1px solid #000 !important;
+      box-shadow: none !important;
+      margin: 0 auto !important;
+    }
+
+    /* Ocultar elementos de interfaz de software */
+    .main-sidebar, .sidebar, .main-header, .navbar, .main-footer, footer, aside, .nav, .no-print {
+      display: none !important;
+    }
+
+    /* Forzar colores */
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  }
+</style>
+
+<div class="form-container">
+  <form method="POST" class="form1">
+    {% csrf_token %}
+    
+    <div class="header-top">
+      <div class="title-text">Centro Regulador de Urgencias y Emergencias Médicas</div>
+      <div style="color:#1a4e8a; font-weight:bold; font-size: 18px;">✚</div>
+    </div>
+    <div class="banner-reporte">Reporte Diario de Centros Satélite</div>
+    <div class="banner-hospital">Hospital Daniel Bracamonte</div>
+
+    <div class="sub-section" style="display:flex; padding:5px; gap:8px;">
+      <div style="flex:2;"><input name="personal_reporta" class="field-value" placeholder="NOMBRE DEL PERSONAL QUE REPORTA" required></div>
+      <div style="flex:1;"><input id="fecha_reporte" name="fecha" class="field-value" type="date" required></div>
+      <div style="flex:0.6;"><input name="hora" class="field-value" type="time" required></div>
+    </div>
+
+    <div class="sub-section">
+      <div class="sub-section-title">Personal de Salud de Turno</div>
+      <div style="display:grid; grid-template-columns: 80px 1fr 1fr; gap:3px; padding:3px; text-align:center;" class="field-label">
+        <div></div><div>Médico</div><div>Licenciad@/Auxiliar</div>
+      </div>
+      
+      <div style="display:grid; grid-template-columns: 80px 1fr 1fr; gap:3px; padding:2px 5px;">
+        <div class="field-label" style="text-align:right; padding-right:8px;">MAÑANA</div>
+        <input name="medico_manana" class="field-value" type="text">
+        <input name="aux_manana" class="field-value" type="text">
+      </div>
+      <div style="display:grid; grid-template-columns: 80px 1fr 1fr; gap:3px; padding:2px 5px;">
+        <div class="field-label" style="text-align:right; padding-right:8px;">TARDE</div>
+        <input name="medico_tarde" class="field-value" type="text">
+        <input name="aux_tarde" class="field-value" type="text">
+      </div>
+      <div style="display:grid; grid-template-columns: 80px 1fr 1fr; gap:3px; padding:2px 5px;">
+        <div class="field-label" style="text-align:right; padding-right:8px;">NOCHE</div>
+        <input name="medico_noche" class="field-value" type="text">
+        <input name="aux_noche" class="field-value" type="text">
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px; margin:5px 0;">
+      <div class="sub-section">
+        <div class="sub-section-title">Choferes de Turno</div>
+        <div style="padding:5px; display:flex; flex-direction:column; gap:4px;">
+          <div style="display:flex; align-items:center;"><span class="field-label" style="width:65px;">Chofer A:</span><input name="chofer_a" class="field-value"></div>
+          <div style="display:flex; align-items:center;"><span class="field-label" style="width:65px;">Chofer B:</span><input name="chofer_b" class="field-value"></div>
+        </div>
+      </div>
+      <div class="sub-section">
+        <div class="sub-section-title">Ambulancias</div>
+        <div style="padding:5px; display:grid; grid-template-columns: 1fr 1fr; gap:8px; text-align:center;">
+          <div><div class="field-label">Tipo 1</div><input name="amb_t1" class="cama-input" value="0" type="number"></div>
+          <div><div class="field-label">Tipo 2</div><input name="amb_t2" class="cama-input" value="0" type="number"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sub-section">
+      <div class="sub-section-title">Observaciones</div>
+      <textarea name="observaciones" style="width:100%; height:40px; border:none; font-size:10px; padding:5px; resize:none; display:block;"></textarea>
+    </div>
+
+    <div class="sub-section">
+      <div class="sub-section-title">Número de Camas Disponibles por Servicio</div>
+      
+      <div class="cama-grid">
+        <div class="cama-item">
+          <span class="label-cama">Cirugía</span>
+          <div style="display:flex; gap:2px;">
+            <span class="field-label">V</span><input name="cir_v" class="cama-input" value="0">
+            <span class="field-label">M</span><input name="cir_m" class="cama-input" value="0">
+          </div>
+        </div>
+        <div class="cama-item">
+          <span class="label-cama">Traumatología</span>
+          <div style="display:flex; gap:2px;">
+            <span class="field-label">V</span><input name="tra_v" class="cama-input" value="0">
+            <span class="field-label">M</span><input name="tra_m" class="cama-input" value="0">
+          </div>
+        </div>
+        <div class="cama-item">
+          <span class="label-cama">Med. Interna</span>
+          <div style="display:flex; gap:2px;">
+            <span class="field-label">V</span><input name="med_v" class="cama-input" value="0">
+            <span class="field-label">M</span><input name="med_m" class="cama-input" value="0">
+          </div>
+        </div>
+        <div class="cama-item">
+          <span class="label-cama">Pediatría</span>
+          <div style="display:flex; flex-direction:column; gap:2px;">
+            <input name="ped_camas" class="cama-input" style="width:45px" placeholder="Camas">
+            <input name="ped_cunas" class="cama-input" style="width:45px" placeholder="Cunas">
+          </div>
+        </div>
+      </div>
+
+      <div class="cama-grid" style="padding-top:0;">
+        <div class="cama-item"><span class="label-cama">UTI</span><input name="uti" class="cama-input" value="0"></div>
+        <div class="cama-item"><span class="label-cama">Neonatología</span><input name="neo" class="cama-input" value="0"></div>
+        <div class="cama-item"><span class="label-cama">T. Intermedia</span><input name="t_intermedia" class="cama-input" value="0"></div>
+        <div class="cama-item"><span class="label-cama">C. Intensivos</span><input name="cuidados_int" class="cama-input" value="0"></div>
+        
+        <div class="cama-item"><span class="label-cama">Quemología</span><input name="quemologia" class="cama-input" value="0"></div>
+        <div class="cama-item"><span class="label-cama">Maternidad/ARO</span><input name="maternidad" class="cama-input" value="0"></div>
+        <div class="cama-item"><span class="label-cama">Ginecología</span><input name="ginecologia" class="cama-input" value="0"></div>
+        <div class="cama-item"><span class="label-cama">Infectología</span><input name="infecto" class="cama-input" value="0"></div>
+      </div>
+    </div>
+
+    <div class="sub-section">
+      <div class="sub-section-title">Personal de Turno CRUEM</div>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; padding:5px;">
+        <input name="cruem_medico" class="field-value" value="DRA. ALEJANDRA ABAJO">
+        <input name="cruem_auxiliar" class="field-value" value="LIC. MARLENE FLORES DELGADO">
+      </div>
+    </div>
+
+    <div class="no-print">
+        <button type="submit" class="save-btn">💾 Guardar Reporte</button>
+        <button type="button" onclick="window.print()" class="save-btn" style="background:#28a745;">🖨️ Imprimir Formulario Limpio</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const fecha = urlParams.get('fecha') || new Date().toISOString().split('T')[0];
+    document.getElementById('fecha_reporte').value = fecha;
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends 'superadmi/base.html' %}
+
+{% block content %}
+<div class="container py-5 text-center">
+    <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+        <div class="bg-dark p-4 text-white">
+            <h1 class="display-6 fw-bold mb-0">{{ ambulancia.placa }}</h1>
+            <p class="text-warning mb-0">{{ ambulancia.hospital.nombre }}</p>
+        </div>
+        
+        <div class="card-body py-5">
+            <h4 class="mb-4">Estado Actual: 
+                {% if ambulancia.estado == 'DISPONIBLE' %}
+                    <span class="badge bg-success px-4 py-2 rounded-pill">DISPONIBLE</span>
+                {% else %}
+                    <span class="badge bg-danger px-4 py-2 rounded-pill text-uppercase">{{ ambulancia.estado }}</span>
+                {% endif %}
+            </h4>
+
+            <div class="d-grid gap-3">
+                <a href="{% url 'hospital:cambiar_estado' ambulancia.id 'EN_CAMINO' %}" 
+                   class="btn btn-danger btn-lg py-4 fs-3 shadow-sm {% if ambulancia.estado == 'EN_CAMINO' %}disabled opacity-50{% endif %}">
+                    <i class="fas fa-ambulance me-2"></i> INICIAR TRASLADO
+                </a>
+
+                <a href="{% url 'hospital:cambiar_estado' ambulancia.id 'DISPONIBLE' %}" 
+                   class="btn btn-success btn-lg py-4 fs-3 shadow-sm {% if ambulancia.estado == 'DISPONIBLE' %}disabled opacity-50{% endif %}">
+                    <i class="fas fa-check-circle me-2"></i> MARCAR DISPONIBLE
+                </a>
+            </div>
+        </div>
+        
+        <div class="card-footer bg-light py-3">
+            <small class="text-muted">Actualizado: {% now "H:i" %}</small>
+        </div>
+    </div>
+</div>
+{% endblock %}

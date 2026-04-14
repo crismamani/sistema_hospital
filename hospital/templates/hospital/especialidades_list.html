@@ -1,97 +1,141 @@
 {% extends 'superadmi/base.html' %}
 
 {% block content %}
-<div class="container-fluid py-4" style="background-color: #f4f7f6; min-height: 100vh;">
+<div class="container-fluid py-4" style="background-color: #f0f2f5; min-height: 100vh;">
     
-    <div class="card border-0 shadow-sm mb-4" style="border-radius: 15px;">
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 20px; background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);">
         <div class="card-body p-4">
             <div class="row align-items-center">
                 <div class="col-md-6">
-                    <h3 class="fw-bold text-primary mb-1">{{ hospital.nombre }}</h3>
-                    <p class="text-muted"><i class="fas fa-map-marker-alt me-2"></i>Gestión de Infraestructura por Especialidad</p>
+                    <div class="d-flex align-items-center">
+                        <div class="bg-primary bg-opacity-10 p-3 rounded-circle me-3">
+                            <i class="fas fa-hospital-symbol text-primary fs-3"></i>
+                        </div>
+                        <div>
+                            <h3 class="fw-bold text-dark mb-0">{{ hospital.nombre }}</h3>
+                            <p class="text-muted mb-0"><i class="fas fa-layer-group me-2"></i>Gestión de Infraestructura y Especialidades</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-6">
-                    <form method="GET" class="d-flex gap-2 justify-content-md-end">
-                        <input type="hidden" name="hospital_id" value="{{ hospital.id }}">
-                        <select name="piso" class="form-select w-auto shadow-sm" onchange="this.form.submit()">
-                            <option value="">Todos los Pisos</option>
-                            {% for p in lista_pisos %}
-                            <option value="{{ p }}" {% if piso_seleccionado == p %}selected{% endif %}>Piso {{ p }}</option>
-                            {% endfor %}
-                        </select>
-                        <a href="?hospital_id={{ hospital.id }}" class="btn btn-outline-secondary shadow-sm"><i class="fas fa-sync"></i></a>
-                    </form>
+                <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                    <div class="d-flex justify-content-md-end gap-2">
+                        <div class="search-box">
+                            <input type="text" id="inputBuscador" class="form-control rounded-pill border-0 shadow-sm ps-4" placeholder="Buscar área..." style="width: 250px;">
+                        </div>
+                        <button class="btn btn-dark rounded-pill px-4 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalEspecialidad">
+                            <i class="fas fa-plus me-2 text-warning"></i>Nueva Especialidad
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="row g-4">
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 border-start border-primary border-5">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="text-muted fw-bold d-block mb-1">CAPACIDAD TOTAL</small>
+                        <h2 class="fw-bold mb-0" id="totalGlobal">0</h2>
+                    </div>
+                    <i class="fas fa-bed text-primary opacity-25 fa-2x"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 border-start border-success border-5">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="text-success fw-bold d-block mb-1">DISPONIBLES</small>
+                        <h2 class="fw-bold mb-0 text-success" id="libresGlobal">0</h2>
+                    </div>
+                    <i class="fas fa-check-circle text-success opacity-25 fa-2x"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 border-start border-warning border-5">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="text-warning fw-bold d-block mb-1">EN LIMPIEZA</small>
+                        <h2 class="fw-bold mb-0 text-warning" id="limpiezaGlobal">0</h2>
+                    </div>
+                    <i class="fas fa-broom text-warning opacity-25 fa-2x"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 border-start border-danger border-5">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="text-danger fw-bold d-block mb-1">OCUPACIÓN</small>
+                        <h2 class="fw-bold mb-0 text-danger" id="ocupadasGlobal">0</h2>
+                    </div>
+                    <i class="fas fa-user-injured text-danger opacity-25 fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4" id="contenedorTarjetas">
         {% for esp in especialidades %}
-        <div class="col-xl-4 col-md-6">
-            <div class="card h-100 border-0 shadow-sm card-especialidad" style="border-radius: 20px;">
+        <div class="col-xl-4 col-md-6 tarjeta-item">
+            <div class="card h-100 border-0 shadow-sm card-especialidad overflow-hidden" style="border-radius: 24px;">
+                <div style="height: 6px; width: 100%;" class="bg-{{ esp.color_carga }}"></div>
+                
                 <div class="card-body p-4">
-                    <div class="d-flex justify-content-between mb-3">
-                        <div class="p-3 bg-primary bg-opacity-10 rounded-3">
-                            <i class="fas fa-hospital-user text-primary fs-4"></i>
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div class="p-2 bg-light rounded-3 border">
+                            <i class="fas fa-microscope text-primary fs-5"></i>
                         </div>
-                        <div class="text-end">
-                            <span class="badge bg-light text-dark border fw-normal">Total: {{ esp.total_camas }}</span>
-                        </div>
+                        <span class="badge bg-dark rounded-pill px-3 py-2">
+                            <span class="c-total">{{ esp.total_camas|default:"0" }}</span> Camas
+                        </span>
                     </div>
 
-                    <h4 class="fw-bold mb-1">{{ esp.nombre }}</h4>
-                    
-                    {% with porcentaje=esp.ocupadas|add:esp.reserva %}
-                        {% if esp.total_camas > 0 %}
-                            {% widthratio porcentaje esp.total_camas 100 as perc %}
-                            <div class="d-flex justify-content-between align-items-center mt-3 mb-1">
-                                <small class="fw-bold">Ocupación</small>
-                                <small class="fw-bold">{{ perc }}%</small>
-                            </div>
-                            <div class="progress mb-4" style="height: 8px; border-radius: 10px;">
-                                <div class="progress-bar {% if perc|add:0 > 80 %}bg-danger{% elif perc|add:0 > 50 %}bg-warning{% else %}bg-success{% endif %}" 
-                                     role="progressbar" style="width: {{ perc }}%"></div>
-                            </div>
-                        {% endif %}
-                    {% endwith %}
+                    <h4 class="fw-bold text-dark mb-1 nombre-esp">{{ esp.nombre }}</h4>
+                    <p class="text-muted small mb-3">Piso {{ esp.piso|default:"1" }} • Área Clínica</p>
 
-                    <div class="row g-2 mb-4 text-center">
-                        <div class="col-4">
-                            <div class="p-2 bg-light rounded-3">
-                                <div class="text-success fw-bold small">LIBRES</div>
-                                <div class="h5 mb-0 fw-bold">{{ esp.libres }}</div>
+                    {% if esp.total_camas > 0 %}
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <small class="fw-bold text-muted" style="font-size: 0.7rem;">ÍNDICE DE OCUPACIÓN</small>
+                            <small class="fw-bold text-{{ esp.color_carga }}">{{ esp.carga }}%</small>
+                        </div>
+                        <div class="progress mb-4" style="height: 10px; border-radius: 20px; background-color: #eee;">
+                            <div class="progress-bar bg-{{ esp.color_carga }}" 
+                                 role="progressbar" style="width: {{ esp.carga }}%; border-radius: 20px;"></div>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-light border-0 small py-2 mb-4">
+                            <i class="fas fa-exclamation-circle me-2"></i>Sin camas registradas
+                        </div>
+                    {% endif %}
+
+                    <div class="row g-2 mb-4">
+                        <div class="col-4 text-center">
+                            <div class="p-2 bg-success bg-opacity-10 rounded-3 border border-success border-opacity-25">
+                                <div class="text-success small fw-bold" style="font-size: 0.65rem;">LIBRES</div>
+                                <div class="h5 mb-0 fw-bold text-success c-libres">{{ esp.libres|default:"0" }}</div>
                             </div>
                         </div>
-                        <div class="col-4">
-                            <div class="p-2 bg-light rounded-3">
-                                <div class="text-danger fw-bold small">OCUP.</div>
-                                <div class="h5 mb-0 fw-bold">{{ esp.ocupadas }}</div>
+                        <div class="col-4 text-center">
+                            <div class="p-2 bg-danger bg-opacity-10 rounded-3 border border-danger border-opacity-25">
+                                <div class="text-danger small fw-bold" style="font-size: 0.65rem;">OCUP.</div>
+                                <div class="h5 mb-0 fw-bold text-danger c-ocupadas">{{ esp.ocupadas|default:"0" }}</div>
                             </div>
                         </div>
-                        <div class="col-4">
-                            <div class="p-2 bg-light rounded-3">
-                                <div class="text-warning fw-bold small">LIMP.</div>
-                                <div class="h5 mb-0 fw-bold">{{ esp.limpieza }}</div>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <div class="p-2 bg-light rounded-3 text-muted">
-                                <div class="fw-bold small">MANT.</div>
-                                <div class="h5 mb-0 fw-bold">{{ esp.mantenimiento }}</div>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <div class="p-2 bg-light rounded-3">
-                                <div class="text-info fw-bold small">RESV.</div>
-                                <div class="h5 mb-0 fw-bold">{{ esp.reserva }}</div>
+                        <div class="col-4 text-center">
+                            <div class="p-2 bg-warning bg-opacity-10 rounded-3 border border-warning border-opacity-25">
+                                <div class="text-warning small fw-bold" style="font-size: 0.65rem;">LIMP.</div>
+                                <div class="h5 mb-0 fw-bold text-warning c-limpieza">{{ esp.limpieza|default:"0" }}</div>
                             </div>
                         </div>
                     </div>
 
                     <a href="{% url 'hospital:detalle_camas_especialidad' hospital.id esp.id %}" 
-                       class="btn btn-dark w-100 rounded-pill py-2 fw-bold shadow-sm mt-auto">
-                        Gestionar Camas <i class="fas fa-chevron-right ms-2"></i>
+                       class="btn btn-outline-dark w-100 rounded-pill py-2 fw-bold transition-all">
+                        GESTIONAR ÁREA <i class="fas fa-arrow-right ms-2"></i>
                     </a>
                 </div>
             </div>
@@ -100,8 +144,84 @@
     </div>
 </div>
 
+<div class="modal fade" id="modalEspecialidad" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow" style="border-radius: 20px;">
+            <div class="modal-header border-0 pt-4 px-4">
+                <h5 class="fw-bold text-dark mb-0">Registrar Nueva Especialidad</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{% url 'hospital:crear_especialidad' %}" method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="hospital_id" value="{{ hospital.id }}">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">NOMBRE DE LA ESPECIALIDAD</label>
+                        <input type="text" name="nombre" class="form-control rounded-3 border-light-subtle shadow-sm" placeholder="Ej: CARDIOLOGÍA" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold small text-muted">PISO ASIGNADO</label>
+                            <input type="number" name="piso" class="form-control rounded-3 border-light-subtle shadow-sm" value="1" min="1" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold small text-muted">NÚMERO DE CUARTO / ÁREA</label>
+                            <input type="text" name="numero_cuarto" class="form-control rounded-3 border-light-subtle shadow-sm" placeholder="Ej: 101" required>
+                        </div>
+                    </div>
+                    <div class="alert alert-info border-0 rounded-4 small mb-0">
+                        <i class="fas fa-info-circle me-2"></i> El sistema vinculará la especialidad al hospital mediante la creación de este cuarto inicial.
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pb-4 px-4">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">Confirmar y Crear</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const inputBuscador = document.getElementById('inputBuscador');
+        const tarjetas = document.querySelectorAll('.tarjeta-item');
+        
+        function calcularTotales() {
+            let total = 0, libres = 0, limpieza = 0, ocupadas = 0;
+            
+            tarjetas.forEach(t => {
+                if (t.style.display !== 'none') {
+                    total += parseInt(t.querySelector('.c-total').textContent) || 0;
+                    libres += parseInt(t.querySelector('.c-libres').textContent) || 0;
+                    ocupadas += parseInt(t.querySelector('.c-ocupadas').textContent) || 0;
+                    limpieza += parseInt(t.querySelector('.c-limpieza').textContent) || 0;
+                }
+            });
+
+            document.getElementById('totalGlobal').innerText = total;
+            document.getElementById('libresGlobal').innerText = libres;
+            document.getElementById('limpiezaGlobal').innerText = limpieza;
+            document.getElementById('ocupadasGlobal').innerText = ocupadas;
+        }
+
+        inputBuscador.addEventListener('input', function() {
+            const query = this.value.toLowerCase().trim();
+            tarjetas.forEach(t => {
+                const nombre = t.querySelector('.nombre-esp').textContent.toLowerCase();
+                t.style.display = nombre.includes(query) ? 'block' : 'none';
+            });
+            calcularTotales();
+        });
+
+        calcularTotales();
+    });
+</script>
+
 <style>
-    .card-especialidad { transition: all 0.3s ease; border: 1px solid transparent !important; }
-    .card-especialidad:hover { transform: translateY(-10px); border-color: #0d6efd !important; }
+    .card-especialidad { transition: all 0.3s ease; }
+    .card-especialidad:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
+    .transition-all { transition: all 0.2s ease; }
+    .progress-bar { transition: width 0.6s ease; }
 </style>
 {% endblock %}

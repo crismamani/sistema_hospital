@@ -90,24 +90,27 @@ class HospitalEspecialidad(models.Model):
         unique_together = ('hospital', 'especialidad')
 
 # --- MODELO DE USUARIO PERSONALIZADO ---
-
 class Usuario(AbstractBaseUser):
     username = models.CharField(max_length=50, unique=True)
     nombre_completo = models.CharField(max_length=200)
     email = models.EmailField(max_length=100, unique=True)
     telefono = models.CharField(max_length=20, null=True, blank=True)
     
-    # Relaciones con null=True para evitar errores al crear el primer SuperAdmin
+    # Campos que se habían borrado y causaron el error
+    numero_colegiatura = models.CharField(max_length=50, null=True, blank=True)
+    
+    # Nuevos campos para dirección y turno
+    ciudad = models.CharField(max_length=100, null=True, blank=True)
+    direccion = models.CharField(max_length=255, null=True, blank=True)
+    turno_asignado = models.CharField(max_length=100, null=True, blank=True)
+
     rol = models.ForeignKey(Rol, on_delete=models.SET_NULL, null=True, blank=True)
     hospital = models.ForeignKey(Hospital, on_delete=models.SET_NULL, null=True, blank=True)
     especialidad = models.ForeignKey(Especialidad, on_delete=models.SET_NULL, null=True, blank=True)
     
-    numero_colegiatura = models.CharField(max_length=50, null=True, blank=True)
     estado = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
-    
     fecha_registro = models.DateTimeField(auto_now_add=True)
-    fecha_actualizacion = models.DateTimeField(auto_now=True)
 
     objects = UsuarioManager()
 
@@ -116,11 +119,9 @@ class Usuario(AbstractBaseUser):
 
     class Meta:
         db_table = 'usuarios'
-        verbose_name = 'Usuario'
-        verbose_name_plural = 'Usuarios'
 
     def __str__(self):
-        return f"{self.username} - {self.nombre_completo}"
+        return self.nombre_completo
 
     @property
     def is_staff(self):
@@ -131,7 +132,6 @@ class Usuario(AbstractBaseUser):
 
     def has_module_perms(self, app_label):
         return self.is_admin
-
 
 # --- RELACIONES Y AUDITORÍA ---
 

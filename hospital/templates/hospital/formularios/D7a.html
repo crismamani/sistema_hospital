@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: Arial, sans-serif;
+    background: #e0e0e0;
+    padding: 15px;
+  }
+
+  /* CONTROLES */
+  .controles {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    background: #fff;
+    padding: 8px 14px;
+    border-radius: 6px;
+    margin-bottom: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    flex-wrap: wrap;
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+  }
+  .controles label { font-weight: 600; }
+  .controles select, .controles input[type=range] { cursor: pointer; }
+  .controles button {
+    padding: 5px 14px;
+    background: #1a1a1a;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+  }
+  .controles button:hover { background: #444; }
+  .size-badge {
+    background: #eee;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    color: #555;
+  }
+
+  /* PÁGINA */
+  .page-wrapper {
+    display: flex;
+    justify-content: center;
+  }
+
+  .page {
+    background: #fff;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+    transition: all 0.2s;
+    overflow: hidden;
+  }
+
+  /* FORMULARIO INTERNO */
+  .form-inner {
+    transform-origin: top left;
+  }
+
+  h1.titulo {
+    font-size: 14pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    text-align: center;
+    padding: 3px;
+    margin-bottom: 1px;
+  }
+
+  .sec {
+    border: 1px solid #000;
+    margin-bottom: 1px;
+  }
+
+  .sec-hdr {
+    background: #000;
+    color: #fff;
+    font-weight: 700;
+    font-size: 9pt;
+    padding: 1px 4px;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.2px;
+  }
+
+  .sec-body { padding: 2px 4px; }
+
+  .row {
+    display: flex;
+    align-items: stretch;
+    border-bottom: 1px solid #ccc;
+    min-height: 14px;
+  }
+  .row:last-child { border-bottom: none; }
+
+  .cell {
+    display: flex;
+    align-items: center;
+    padding: 1px 3px;
+    border-right: 1px solid #ccc;
+    min-width: 0;
+  }
+  .cell:last-child { border-right: none; }
+
+  .lbl {
+    font-size: 8pt;
+    font-weight: 700;
+    white-space: nowrap;
+    margin-right: 2px;
+    color: #222;
+    flex-shrink: 0;
+  }
+
+  input[type=text], input[type=date], input[type=time] {
+    border: none;
+    border-bottom: 1px solid #777;
+    outline: none;
+    font-family: Arial, sans-serif;
+    font-size: 8pt;
+    flex: 1;
+    min-width: 10px;
+    background: transparent;
+    padding: 0 1px;
+  }
+
+  textarea {
+    border: none;
+    outline: none;
+    resize: none;
+    font-family: Arial, sans-serif;
+    font-size: 8pt;
+    width: 100%;
+    background: transparent;
+    padding: 1px 2px;
+    color: #333;
+  }
+
+  .radio-g { display: flex; gap: 5px; align-items: center; }
+  .radio-g label { font-size: 6pt; font-weight: 400; white-space: nowrap; }
+
+  /* DIAGNÓSTICOS */
+  .diag-row {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    border-bottom: 1px solid #ccc;
+    padding: 1px 4px;
+    min-height: 13px;
+  }
+  .diag-row:last-child { border-bottom: none; }
+  .diag-lbl { font-size: 6.5pt; font-weight: 700; width: 12px; flex-shrink: 0; }
+  .diag-inp { flex: 1; border: none; border-bottom: 1px solid #999; font-size: 6pt; font-family: Arial, sans-serif; outline: none; background: transparent; }
+  .cie-g { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+  .cie-g span { font-size: 6pt; font-weight: 700; white-space: nowrap; }
+  .cie-g input { width: 42px; font-size: 6pt; border: none; border-bottom: 1px solid #999; outline: none; font-family: Arial, sans-serif; background: transparent; }
+
+  /* TEXTAREA SECTION */
+  .ta-sec {
+    padding: 2px 4px;
+  }
+
+  /* C13 */
+  .firmas-row {
+    display: flex;
+    gap: 10px;
+    padding: 30px 4px 10px;
+    justify-content: space-between;
+  }
+  .firma-box {
+    flex: 1;
+    text-align: center;
+    font-size: 6.5pt;
+    font-weight: 600;
+    border-top: 1px solid #333;
+    padding-top: 2px;
+  }
+
+  .recuerde {
+  background: #f5f5f5;
+  border: 1px solid #bbb;
+  padding: 4px 8px;
+  font-size: 6pt; /* Un poquito más legible */
+  line-height: 1.2;
+  margin-top: 10px; /* Espacio antes del texto final */
+}
+
+@media print {
+  @page { 
+    size: auto;
+    margin: 0; /* Esto es vital para que el navegador no meta sus propios datos */
+  }
+
+  body { 
+    background: white !important; 
+    margin: 0 !important; 
+    padding: 0 !important;
+  }
+
+  .page-wrapper { 
+    display: block !important; 
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .page { 
+    box-shadow: none !important; 
+    transform: scale(1) !important; 
+    /* Margen: Arriba 1cm, Derecha 1cm, Abajo 1cm, Izquierda 2cm (para dar el centímetro extra que pediste) */
+    margin: 1cm 1cm 1cm 2cm !important; 
+  }
+
+  .controles, .no-print { display: none !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- CONTROLES -->
+<div class="controles no-print">
+  <button onclick="window.print()">🖨️ Imprimir / PDF</button>
+</div>
+
+<div class="page-wrapper">
+  <div class="page" id="page">
+    <div class="form-inner" id="formInner">
+
+      <h1 class="titulo">FORMULARIO D7a CONTRARREFERENCIA</h1>
+
+      <!-- C1 -->
+      <div class="sec">
+        <div class="sec-hdr">DATOS DEL ESTABLECIMIENTO DE SALUD QUE CONTRARREFIERE (C1)</div>
+        <div class="row">
+          <div class="cell" style="flex:2"><span class="lbl">NOMBRE DEL ESTABLECIMIENTO:</span><input type="text"></div>
+          <div class="cell" style="flex:1"><span class="lbl">SERVICIO:</span><input type="text"></div>
+          <div class="cell" style="flex:1"><span class="lbl">RED DE SALUD:</span><input type="text"></div>
+        </div>
+        <div class="row">
+          <div class="cell" style="flex:1"><span class="lbl">MUNICIPIO:</span><input type="text"></div>
+          <div class="cell" style="flex:1"><span class="lbl">TELÉFONO DE CONTACTO:</span><input type="text"></div>
+          <div class="cell" style="flex:0 0 auto"><span class="lbl">FECHA:</span><input type="date" style="width:80px;"></div>
+          <div class="cell" style="flex:0 0 auto"><span class="lbl">HORA:</span><input type="time" style="width:60px;"></div>
+          <div class="cell" style="flex:0 0 auto"><span class="lbl">NIVEL DE EESS:</span><input type="text" style="width:40px;"></div>
+        </div>
+      </div>
+
+      <!-- C2 -->
+      <div class="sec">
+        <div class="sec-hdr">IDENTIFICACION DEL PACIENTE (C2)</div>
+        <div class="row">
+          <div class="cell" style="flex:2"><span class="lbl">NOMBRES:</span><input type="text"></div>
+          <div class="cell" style="flex:2"><span class="lbl">APELLIDOS:</span><input type="text"></div>
+          <div class="cell" style="flex:1"><span class="lbl">C.I.:</span><input type="text"></div>
+        </div>
+        <div class="row">
+          <div class="cell" style="flex:2"><span class="lbl">DOMICILIO:</span><input type="text"></div>
+          <div class="cell" style="flex:1"><span class="lbl">TEL/CEL:</span><input type="text"></div>
+          <div class="cell" style="flex:1"><span class="lbl">EDAD:</span><input type="text" style="width:35px;"></div>
+          <div class="cell" style="flex:0 0 auto"><span class="lbl">SEXO:</span>
+            <div class="radio-g"><label><input type="radio" name="sexo" value="M"> M</label><label><input type="radio" name="sexo" value="F"> F</label></div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="cell" style="flex:1.8"><span class="lbl">PERSONA CON DISCAPACIDAD:</span>
+            <div class="radio-g"><label><input type="radio" name="discap" value="SI"> SI</label><label><input type="radio" name="discap" value="NO"> NO</label></div>
+          </div>
+          <div class="cell" style="flex:2"><span class="lbl">TIPO DE DISCAPACIDAD:</span><input type="text"></div>
+          <div class="cell" style="flex:1"><span class="lbl">GRADO DE DISCAPACIDAD:</span><input type="text"></div>
+        </div>
+      </div>
+
+      <!-- C3 -->
+      <div class="sec">
+        <div class="sec-hdr">DATOS CLINICOS DE ALTA (C3)</div>
+        <div class="row">
+          <div class="cell" style="flex:0 0 auto"><span class="lbl">DÍAS DE INTERNACION:</span><input type="text" style="width:35px;"></div>
+          <div class="cell" style="flex:0 0 auto"><span class="lbl">PESO:</span><input type="text" style="width:35px;"></div>
+          <div class="cell" style="flex:0 0 auto"><span class="lbl">I.M.C.:</span><input type="text" style="width:35px;"></div>
+          <div class="cell" style="flex:0 0 auto"><span class="lbl">T°:</span><input type="text" style="width:30px;"> <span class="lbl">°C</span></div>
+          <div class="cell" style="flex:0 0 auto"><span class="lbl">P.A.:</span><input type="text" style="width:50px;"> <span class="lbl">mmHg</span></div>
+          <div class="cell" style="flex:0 0 auto"><span class="lbl">F.C.:</span><input type="text" style="width:35px;"> <span class="lbl">LPM</span></div>
+          <div class="cell" style="flex:0 0 auto"><span class="lbl">F.R.:</span><input type="text" style="width:35px;"> <span class="lbl">CPM</span></div>
+          <div class="cell" style="flex:1"><span class="lbl">%SPO:</span><input type="text"></div>
+        </div>
+      </div>
+
+      <!-- C4 -->
+      <div class="sec">
+        <div class="sec-hdr">DIAGNOSTICO(S) DE INGRESO: (C4)</div>
+        <div class="diag-row"><span class="diag-lbl">a)</span><input type="text" class="diag-inp"><div class="cie-g"><span>CIE – 10</span><input type="text"></div></div>
+        <div class="diag-row"><span class="diag-lbl">b)</span><input type="text" class="diag-inp"><div class="cie-g"><span>CIE – 10</span><input type="text"></div></div>
+        <div class="diag-row"><span class="diag-lbl">c)</span><input type="text" class="diag-inp"><div class="cie-g"><span>CIE – 10</span><input type="text"></div></div>
+      </div>
+
+      <!-- C5 -->
+      <div class="sec">
+        <div class="sec-hdr">DIAGNOSTICO(S) DE EGRESO SEGÚN CIE - 10: (C5)</div>
+        <div class="diag-row"><span class="diag-lbl">a)</span><input type="text" class="diag-inp"><div class="cie-g"><span>CIE – 10</span><input type="text"></div></div>
+        <div class="diag-row"><span class="diag-lbl">b)</span><input type="text" class="diag-inp"><div class="cie-g"><span>CIE – 10</span><input type="text"></div></div>
+        <div class="diag-row"><span class="diag-lbl">c)</span><input type="text" class="diag-inp"><div class="cie-g"><span>CIE – 10</span><input type="text"></div></div>
+      </div>
+
+      <!-- C6 -->
+      <div class="sec">
+        <div class="sec-hdr">EVOLUCION, COMPLICACIONES: (C6)</div>
+        <div class="ta-sec"><textarea id="ta_c6" rows="4"></textarea></div>
+      </div>
+
+      <!-- C7 -->
+      <div class="sec">
+        <div class="sec-hdr">EXAMENES COMPLEMENTARIOS DE DIAGNÓSTICO (C7)</div>
+        <div class="ta-sec">
+          <div style="display:flex; gap:3px; align-items:flex-start;">
+            <div style="flex:0 0 12px; font-size:6.5pt; font-weight:700; padding-top:1px;">a)</div><textarea id="ta_c7a" rows="1" style="flex:1;"></textarea>
+          </div>
+          <div style="display:flex; gap:3px; align-items:flex-start;">
+            <div style="flex:0 0 12px; font-size:6.5pt; font-weight:700; padding-top:1px;">b)</div><textarea id="ta_c7b" rows="1" style="flex:1;"></textarea>
+          </div>
+          <div style="display:flex; gap:3px; align-items:flex-start;">
+            <div style="flex:0 0 12px; font-size:6.5pt; font-weight:700; padding-top:1px;">c)</div><textarea id="ta_c7c" rows="1" style="flex:1;"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- C8 -->
+      <div class="sec">
+        <div class="sec-hdr">OTROS EXAMENES E INTERCONSULTAS (C8)</div>
+        <div class="ta-sec"><textarea id="ta_c8" rows="2"></textarea></div>
+      </div>
+
+      <!-- C9 -->
+      <div class="sec">
+        <div class="sec-hdr">TRATAMIENTOS REALIZADOS (C9)</div>
+        <div class="ta-sec"><textarea id="ta_c9" rows="2"></textarea></div>
+      </div>
+
+      <!-- C10 -->
+      <div class="sec">
+        <div class="sec-hdr">RECOMENDACIONES PARA EL PACIENTE (C10)</div>
+        <div class="ta-sec"><textarea id="ta_c10" rows="3"></textarea></div>
+      </div>
+
+      <!-- C11 -->
+      <div class="sec">
+        <div class="sec-hdr">OTROS ANEXOS O ESTUDIO PENDIENTES (C11)</div>
+        <div class="ta-sec"><textarea id="ta_c11" rows="2"></textarea></div>
+      </div>
+
+      <!-- C12 -->
+      <div class="sec">
+        <div class="sec-hdr">OBSERVACIONES / RECOMENDACIONES A LA CONTRARREFERENCIA (C12)</div>
+        <div class="ta-sec"><textarea id="ta_c12" rows="2"></textarea></div>
+      </div>
+
+      <!-- C13 -->
+      <div class="sec">
+        <div class="sec-hdr">ESTABLECIMIENTOS DE SALUD AL QUE SE REALIZA LA CONTRARREFERENCIA (C13)</div>
+        <div class="sec-body">
+          <div class="row">
+            <div class="cell" style="flex:3"><span class="lbl">ESTABLECIMIENTO DE SALUD:</span><input type="text"></div>
+            <div class="cell" style="flex:2"><span class="lbl">MUNICIPIO:</span><input type="text"></div>
+            <div class="cell" style="flex:1"><span class="lbl">NIVEL EESS:</span><input type="text"></div>
+          </div>
+          <div class="row">
+            <div class="cell" style="flex:1"><span class="lbl">RED DE SALUD:</span><input type="text"></div>
+            <div class="cell" style="flex:2">
+              <span class="lbl">SE CONTACTO AL ESTABLECIMIENTO:</span>
+              <div class="radio-g">
+                <label><input type="radio" name="contacto" value="SI"> SI</label>
+                <label><input type="radio" name="contacto" value="NO"> NO</label>
+              </div>
+              <span class="lbl" style="margin-left:4px;">POR TELESALUD:</span><input type="text" style="width:35px;">
+            </div>
+          </div>
+          <div class="row">
+            <div class="cell" style="flex:1"><span class="lbl">CONTACTO DEL ESTABLECIMIENTO QUE RECIBE LA CONTRARREFERENCIA:</span><input type="text"></div>
+          </div>
+          <div class="row">
+            <div class="cell" style="flex:1"><span class="lbl">NOMBRE DE ACOMPAÑANTE, FAMILIAR Y OTROS:</span><input type="text"></div>
+          </div>
+
+          <div class="firmas-row">
+            <div class="firma-box">FIRMA Y SELLO DEL MEDICO TRATANTE</div>
+            <div class="firma-box">SELLO DEL ESTABLECIMIENTO</div>
+            <div class="firma-box">FIRMA Y NOMBRE DEL USUARIO O ACOMPAÑANTE<br><span style="font-weight:400;">Nombre: .................................</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RECUERDE -->
+      <div class="recuerde">
+        <strong>RECUERDE:</strong>&nbsp;
+        a) Original, para el establecimiento de salud receptor – Expediente Clínico &nbsp;
+        b) Copia 1, para el establecimiento de salud receptor – Comité de Referencia y Contrarreferencia &nbsp;
+        c) Copia 2, para trámites administrativos del SUS &nbsp;
+        d) Copia 3, para el establecimiento que realiza la referencia – Expediente Clínico &nbsp;
+        e) Copia 4, para el establecimiento que realiza la referencia – Comité de referencia
+      </div>
+
+    </div><!-- /form-inner -->
+  </div><!-- /page -->
+</div><!-- /page-wrapper -->
+
+<script>
+    // Configuración para tamaño OFICIO (Legal)
+    const size = { w: 216, h: 355 }; // Bajamos 1mm para margen de seguridad
+    let currentZoom = 100; // En impresión usaremos 100% real
+  
+    function mmToPx(mm) { return mm * 3.7795275591; }
+  
+    function updatePage() {
+      const page = document.getElementById('page');
+      const inner = document.getElementById('formInner');
+      const wPx = mmToPx(size.w);
+      const hPx = mmToPx(size.h);
+  
+      page.style.width = wPx + 'px';
+      page.style.height = hPx + 'px';
+      
+      // Reducimos padding interno para ganar espacio vertical
+      const padPx = mmToPx(4);
+      inner.style.padding = padPx + 'px';
+      inner.style.width = wPx + 'px';
+      inner.style.height = hPx + 'px'; // Forzamos altura interna
+      inner.style.overflow = "hidden";
+      applyZoom();
+    }
+  
+    function applyZoom() {
+      const page = document.getElementById('page');
+      const scale = currentZoom / 100;
+      page.style.transform = `scale(${scale})`;
+      page.style.transformOrigin = 'top center';
+      
+      const h = mmToPx(size.h);
+      document.querySelector('.page-wrapper').style.height = (h * scale + 50) + 'px';
+    }
+  
+    // Ejecutar al cargar
+    window.onload = updatePage;
+  </script>
+  </body>
+  </html>

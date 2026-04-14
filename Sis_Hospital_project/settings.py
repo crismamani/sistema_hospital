@@ -88,7 +88,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # --- CONFIGURACIÓN DE LOGIN ---
 LOGIN_URL = 'superadmin:login'
-LOGIN_REDIRECT_URL = 'superadmin:dashboard_superadmin' 
+LOGIN_REDIRECT_URL = 'hospital:landing_page' 
 LOGOUT_REDIRECT_URL = 'superadmin:login'
 # Esto le dice a Django que, después de loguearse con éxito, 
 # ejecute nuestra función de redirección por roles.

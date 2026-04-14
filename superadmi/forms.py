@@ -137,17 +137,31 @@ class LoginForm(AuthenticationForm):
 class PacienteForm(forms.ModelForm):
     class Meta:
         model = Paciente
-        fields = ['nombre_completo', 'dni', 'fecha_nacimiento', 'genero', 'telefono', 'direccion', 'hospital', 'cama_asignada']
+        # IMPORTANTE: Añadir los nuevos campos médicos aquí
+        fields = [
+            'nombre_completo', 'dni', 'fecha_nacimiento', 'genero', 
+            'telefono', 'direccion', 'hospital', 'cama_asignada',
+            'motivo_ingreso', 'presion_arterial', 'temperatura', 
+            'frecuencia_cardiaca', 'saturacion_oxigeno', 'alergias'
+        ]
         widgets = {
-            'fecha_nacimiento': forms.DateInput(attrs={'type': 'date'}),
-            'direccion': forms.Textarea(attrs={'rows': 2}),
+            'fecha_nacimiento': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'motivo_ingreso': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Diagnóstico inicial...'}),
+            'direccion': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'alergias': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Filtro de seguridad para no asignar camas ocupadas
         self.fields['cama_asignada'].queryset = Cama.objects.filter(estado='LIBRE')
-        for field in self.fields.values():
-            field.widget.attrs.update({'class': 'form-control custom-input'})
+        
+        # Aplicamos la clase 'form-control' a TODOS los campos automáticamente para que se vean PRO
+        for field in self.fields:
+            if field not in ['hospital', 'cama_asignada', 'genero']:
+                self.fields[field].widget.attrs.update({'class': 'form-control form-control-pro'})
+            else:
+                self.fields[field].widget.attrs.update({'class': 'form-select form-control-pro'})
 # Agrégalo al final de forms.py
 class EspecialidadForm(forms.ModelForm):
     class Meta:

@@ -1,0 +1,310 @@
+{% extends 'superadmi/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+  /* Contenedor Principal Estilo Formulario */
+  .form-unificado {
+    background: #fff;
+    width: 100%;
+    max-width: 900px;
+    margin: 20px auto;
+    border: 1px solid #1a4e8a;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  /* Encabezado Institucional */
+  .header-institucional {
+    background: #cce6f4;
+    border-bottom: 3px solid #1a4e8a;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  
+  .logo-cruem {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: #1a4e8a;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: bold;
+    text-align: center;
+    line-height: 1.2;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  }
+
+  .titulo-hospital {
+    background: #1a4e8a;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    padding: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* Estilos del Calendario */
+  .calendar-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 2px;
+    background: #fff;
+  }
+  
+  .calendar-table th {
+    background: #f1f5f9;
+    color: #1a4e8a;
+    font-size: 11px;
+    padding: 10px;
+    text-transform: uppercase;
+    border: 1px solid #dee2e6;
+  }
+
+  .calendar-table td {
+    width: 14.28%;
+    height: 90px;
+    border: 1px solid #dee2e6;
+    vertical-align: top;
+    position: relative;
+    transition: all 0.2s;
+  }
+
+  .day-cell {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    text-decoration: none !important;
+  }
+
+  .day-number {
+    font-size: 22px;
+    font-weight: 900;
+    font-style: italic;
+    color: #1a4e8a;
+  }
+
+  /* Estado: Día con Reporte (VERDE) */
+  .has-report {
+    background-color: #28a745 !important;
+  }
+  .has-report .day-number {
+    color: white !important;
+  }
+  .status-label {
+    font-size: 8px;
+    font-weight: bold;
+    color: white;
+    background: rgba(0,0,0,0.2);
+    padding: 2px 5px;
+    border-radius: 10px;
+    margin-top: 5px;
+  }
+
+  /* Estado: Vacío (AZUL TENUE) */
+  .day-empty {
+    background-color: #f8fbff;
+  }
+  .day-empty:hover {
+    background-color: #e3f2fd;
+    border: 2px solid #1a4e8a;
+  }
+
+  /* Sección de Historial (Tabla inferior) */
+  .seccion-historial {
+    padding: 20px;
+    background: #fff;
+    border-top: 2px solid #1a4e8a;
+  }
+
+  .table-custom {
+    font-size: 13px;
+  }
+  .table-custom thead {
+    background: #1a4e8a;
+    color: white;
+  }
+
+  .legend-box {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    padding: 10px;
+    font-size: 11px;
+    background: #f8f9fa;
+  }
+
+  @media print {
+    .no-print, .btn, .controls { display: none !important; }
+    .form-unificado { border: none; box-shadow: none; margin: 0; }
+  }
+</style>
+
+<div class="container-fluid py-4">
+  <div class="form-unificado">
+    
+    <div class="header-institucional">
+      <div class="logo-cruem">✚<br>CRUEM</div>
+      <div style="flex:1; text-align:center;">
+        <div style="font-size: 11px; font-weight: bold; color: #1a4e8a; text-transform: uppercase;">Gobierno Autónomo Departamental de Potosí</div>
+        <div style="font-size: 18px; font-weight: 800; color: #1a4e8a;">MONITOR DE DISPONIBILIDAD HOSPITALARIA</div>
+      </div>
+    </div>
+    <select class="form-control" onchange="location = '?mes={{ mes_actual }}&anio={{ anio_actual }}&hospital_id=' + this.value;">
+        <option value="">-- Ver Todos los Hospitales --</option>
+        {% for h in hospitales %}
+            <option value="{{ h.id }}" {% if h.id == hospital_id %}selected{% endif %}>{{ h.nombre }}</option>
+        {% endfor %}
+    </select>
+    <div class="titulo-hospital">
+      <i class="fas fa-hospital"></i> Hospital Daniel Bracamonte
+    </div>
+
+    <div class="controls no-print d-flex justify-content-center align-items-center p-3 bg-light border-bottom">
+      <label class="mr-2 font-weight-bold" style="font-size: 12px;">Periodo:</label>
+      <select id="calMonth" onchange="cambiarPeriodo()" class="form-control-sm border-primary">
+        <option value="1">Enero</option><option value="2">Febrero</option>
+        <option value="3">Marzo</option><option value="4">Abril</option>
+        <option value="5">Mayo</option><option value="6">Junio</option>
+        <option value="7">Julio</option><option value="8">Agosto</option>
+        <option value="9">Septiembre</option><option value="10">Octubre</option>
+        <option value="11">Noviembre</option><option value="12">Diciembre</option>
+      </select>
+      <input id="calYear" type="number" value="2026" class="form-control-sm border-primary ml-2" style="width: 80px;" onchange="cambiarPeriodo()">
+      
+    </div>
+
+    <div class="legend-box">
+        <span><i class="fas fa-square text-success"></i> Reporte Enviado</span>
+        <span><i class="fas fa-square" style="color:#f8fbff; border:1px solid #ddd"></i> Pendiente</span>
+    </div>
+
+    <div id="calContainer" class="p-3">
+        </div>
+
+    <div class="seccion-historial">
+        <h5 class="mb-3" style="color: #1a4e8a; font-weight: bold; border-left: 5px solid #1a4e8a; padding-left: 10px;">
+            <i class="fas fa-history"></i> Registros del Mes
+        </h5>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover table-bordered table-custom">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                        <th>Personal Responsable</th>
+                        <th>Estado</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in reportes %}
+                    <tr>
+                        <td class="font-weight-bold">{{ r.fecha|date:"d/m/Y" }}</td>
+                        <td>{{ r.hora }}</td>
+                        <td>{{ r.personal_reporta }}</td>
+                        <td><span class="badge badge-success">Recibido</span></td>
+                        <td class="text-center">
+                            <a href="{% url 'hospital:crear_reporte' %}?fecha={{ r.fecha|date:'Y-m-d' }}" class="btn btn-primary btn-xs px-2 py-0">
+                                <i class="fas fa-eye"></i> Ver
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-3">No existen reportes procesados en este periodo.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+    // 1. Datos inyectados desde Django
+    const diasRegistrados = {{ reportes_registrados|safe|default:"[]" }};
+    const mesSeleccionado = {{ mes_actual|default:4 }};
+    const anioSeleccionado = {{ anio_actual|default:2026 }};
+
+    // Inicializar selectores
+    document.getElementById('calMonth').value = mesSeleccionado;
+    document.getElementById('calYear').value = anioSeleccionado;
+
+    renderCal();
+
+    function renderCal() {
+        const month = parseInt(document.getElementById('calMonth').value) - 1; // JS usa 0-11
+        const year = parseInt(document.getElementById('calYear').value);
+        
+        const firstDay = new Date(year, month, 1).getDay(); 
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        
+        // Ajuste Lunes a Domingo
+        const startOffset = (firstDay === 0) ? 6 : firstDay - 1;
+        
+        let html = '<table class="calendar-table">';
+        html += '<thead><tr><th>Lun</th><th>Mar</th><th>Mié</th><th>Jue</th><th>Vie</th><th>Sáb</th><th>Dom</th></tr></thead>';
+        
+        let day = 1;
+        const totalCells = startOffset + daysInMonth;
+        const rows = Math.ceil(totalCells / 7);
+
+        for (let r = 0; r < rows; r++) {
+            html += '<tr>';
+            for (let c = 0; c < 7; c++) {
+                const cellIndex = r * 7 + c;
+                
+                if (cellIndex < startOffset || day > daysInMonth) {
+                    html += '<td class="bg-light"></td>';
+                } else {
+                    const yaRegistrado = diasRegistrados.includes(day);
+                    const claseEstado = yaRegistrado ? 'has-report' : 'day-empty';
+                    const label = yaRegistrado ? '<span class="status-label">ENVIADO</span>' : '';
+                    
+                    html += `<td>
+                                <a href="javascript:void(0)" onclick="irARegistro(${day})" class="day-cell ${claseEstado}">
+                                    <span class="day-number">${day}</span>
+                                    ${label}
+                                </a>
+                             </td>`;
+                    day++;
+                }
+            }
+            html += '</tr>';
+        }
+        html += '</table>';
+        document.getElementById('calContainer').innerHTML = html;
+    }
+
+    function cambiarPeriodo() {
+        const m = document.getElementById('calMonth').value;
+        const y = document.getElementById('calYear').value;
+        // Recarga enviando el nuevo periodo a la vista de Django
+        window.location.href = `?mes=${m}&anio=${y}`;
+    }
+
+    function irARegistro(d) {
+        const m = document.getElementById('calMonth').value.padStart(2, '0');
+        const y = document.getElementById('calYear').value;
+        const diaStr = d.toString().padStart(2, '0');
+        const fechaStr = `${y}-${m}-${diaStr}`;
+        
+        window.location.href = `{% url 'hospital:crear_reporte' %}?fecha=${fechaStr}`;
+    }
+</script>
+{% endblock %}

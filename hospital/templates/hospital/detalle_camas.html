@@ -11,38 +11,42 @@
                         <i class="fas fa-arrow-left"></i>
                     </a>
                     <div>
-                        <h2 class="fw-bold text-dark mb-0">{{ especialidad.nombre|upper }}</h2>
-                        <p class="text-muted mb-0"><i class="fas fa-hospital me-2"></i>{{ hospital.nombre }}</p>
+                        <h2 class="fw-bold text-dark mb-0 text-uppercase">{{ especialidad.nombre }}</h2>
+                        <p class="text-muted mb-0"><i class="fas fa-hospital me-2 text-primary"></i>{{ hospital.nombre }}</p>
                     </div>
                 </div>
-                <div class="input-group shadow-sm" style="width: 250px;">
-                    <span class="input-group-text bg-white border-end-0 rounded-start-pill"><i class="fas fa-search text-muted"></i></span>
-                    <input type="text" id="buscadorCuarto" class="form-control border-start-0 rounded-end-pill" placeholder="Buscar cuarto...">
+                <div class="d-flex gap-2">
+                    <button class="btn btn-dark rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#modalNuevoCuarto">
+                        <i class="fas fa-door-open me-2"></i> + Cuarto
+                    </button>
+                    <button class="btn btn-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#modalNuevaCama">
+                        <i class="fas fa-bed me-2"></i> + Cama
+                    </button>
                 </div>
             </div>
 
             <div class="row g-3">
                 <div class="col-md-3 col-6">
-                    <div class="p-3 border rounded-4 bg-white text-center shadow-sm">
+                    <div class="p-3 border rounded-4 bg-white text-center shadow-sm border-bottom border-primary border-4" style="cursor:pointer;" onclick="filtrarCamas('TODAS')">
                         <small class="text-muted fw-bold d-block">TOTAL</small>
                         <span class="h4 fw-bold">{{ stats.total }}</span>
                     </div>
                 </div>
                 <div class="col-md-3 col-6">
-                    <div class="p-3 border rounded-4 bg-white text-center shadow-sm border-bottom border-success border-4">
-                        <small class="text-success fw-bold d-block">DISPONIBLES</small>
+                    <div class="p-3 border rounded-4 bg-white text-center shadow-sm border-bottom border-success border-4" style="cursor:pointer;" onclick="filtrarCamas('LIBRE')">
+                        <small class="text-success fw-bold d-block">LIBRES</small>
                         <span class="h4 fw-bold text-success">{{ stats.libres }}</span>
                     </div>
                 </div>
                 <div class="col-md-3 col-6">
-                    <div class="p-3 border rounded-4 bg-white text-center shadow-sm border-bottom border-danger border-4">
+                    <div class="p-3 border rounded-4 bg-white text-center shadow-sm border-bottom border-danger border-4" style="cursor:pointer;" onclick="filtrarCamas('OCUPADO')">
                         <small class="text-danger fw-bold d-block">OCUPADAS</small>
                         <span class="h4 fw-bold text-danger">{{ stats.ocupadas }}</span>
                     </div>
                 </div>
                 <div class="col-md-3 col-6">
-                    <div class="p-3 border rounded-4 bg-white text-center shadow-sm border-bottom border-warning border-4">
-                        <small class="text-warning fw-bold d-block">LIMPIEZA</small>
+                    <div class="p-3 border rounded-4 bg-white text-center shadow-sm border-bottom border-warning border-4" style="cursor:pointer;" onclick="filtrarCamas('LIMPIEZA')">
+                        <small class="text-warning fw-bold d-block">LIMPIEZA/MANT.</small>
                         <span class="h4 fw-bold text-warning">{{ stats.limpieza }}</span>
                     </div>
                 </div>
@@ -52,83 +56,82 @@
 
     <div class="row">
         {% for cuarto in cuartos %}
-        <div class="col-12 mb-4 tarjeta-cuarto" data-nro="{{ cuarto.numero_cuarto }}">
-            <h5 class="fw-bold mb-3"><i class="fas fa-door-open me-2 text-primary"></i>Cuarto {{ cuarto.numero_cuarto }}</h5>
-            <div class="d-flex flex-wrap gap-3">
-                
+        <div class="col-12 mb-5">
+            <div class="d-flex align-items-center mb-3">
+                <div class="badge bg-primary fs-6 px-3 py-2 rounded-3 shadow-sm me-3">
+                    Cuarto {{ cuarto.numero_cuarto }}
+                </div>
+                <hr class="flex-grow-1 opacity-10">
+            </div>
+
+            <div class="d-flex flex-wrap gap-4">
                 {% for cama in cuarto.camas.all %}
-                <div class="dropdown">
+                <div class="dropdown contenedor-cama-individual" data-estado="{{ cama.estado }}">
                     <div class="card p-3 text-center shadow-sm border-2 btn-cama 
                         {% if cama.estado == 'OCUPADO' %}border-danger bg-danger-subtle
                         {% elif cama.estado == 'LIBRE' %}border-success bg-success-subtle
                         {% else %}border-warning bg-warning-subtle{% endif %}" 
-                        style="width: 145px; border-radius: 18px; cursor: pointer;" data-bs-toggle="dropdown">
+                        style="width: 160px; border-radius: 20px; cursor: pointer;" 
+                        data-bs-toggle="dropdown">
                         
-                        <i class="fas fa-bed fs-2 
+                        <i class="fas fa-bed fs-1 mb-2 
                             {% if cama.estado == 'OCUPADO' %}text-danger
                             {% elif cama.estado == 'LIBRE' %}text-success
                             {% else %}text-warning{% endif %}"></i>
-                        <div class="fw-bold mt-2 text-dark">Cama {{ cama.numero }}</div>
-                        <small class="fw-bold text-uppercase" style="font-size: 0.6rem;">
+                        
+                        <div class="fw-bold text-dark small mb-1">Cama {{ cama.numero }}</div>
+                        
+                        <span class="badge rounded-pill {% if cama.estado == 'OCUPADO' %}bg-danger{% elif cama.estado == 'LIBRE' %}bg-success{% else %}bg-warning text-dark{% endif %} w-100">
                             {% if cama.estado == 'OCUPADO' and cama.paciente_actual %}
                                 {{ cama.paciente_actual.nombre_completo|truncatechars:12 }}
                             {% else %}
                                 {{ cama.get_estado_display }}
                             {% endif %}
-                        </small>
+                        </span>
                     </div>
 
-                    <ul class="dropdown-menu shadow border-0 p-2" style="border-radius: 12px;">
+                    <ul class="dropdown-menu shadow border-0 p-2 mt-2" style="border-radius: 12px;">
                         {% if cama.estado == 'OCUPADO' and cama.paciente_actual %}
-                            <li><a class="dropdown-item rounded-2" href="{% url 'hospital:historial_paciente' cama.paciente_actual.id %}">
+                            <li class="px-3 py-2 small text-muted border-bottom">Paciente: {{ cama.paciente_actual.nombre_completo }}</li>
+                            <li><a class="dropdown-item rounded-2 py-2" href="{% url 'hospital:historial_paciente' cama.paciente_actual.id %}">
                                 <i class="fas fa-file-medical text-primary me-2"></i>Ver Historial</a></li>
-                            
-                            <li><a class="dropdown-item rounded-2" href="#" data-bs-toggle="modal" data-bs-target="#modalTraslado{{ cama.id }}">
-                                <i class="fas fa-exchange-alt text-info me-2"></i>Traslado Interno</a></li>
-
-                            <li><a class="dropdown-item rounded-2" href="{% url 'hospital:derivar_paciente' cama.paciente_actual.id %}">
-                                <i class="fas fa-hospital text-warning me-2"></i>Derivación Exterior</a></li>
-
+                            <li><a class="dropdown-item rounded-2 py-2" href="#" data-bs-toggle="modal" data-bs-target="#modalTraslado{{ cama.id }}">
+                                <i class="fas fa-exchange-alt text-info me-2"></i>Traslado/Derivación</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item rounded-2 text-danger fw-bold" href="{% url 'hospital:dar_alta_paciente' cama.paciente_actual.id %}">
-                                <i class="fas fa-sign-out-alt me-2"></i>Dar de Alta</a></li>
-
-                        {% elif cama.estado == 'LIMPIEZA' %}
-                            <li><a class="dropdown-item rounded-2 fw-bold text-success" href="{% url 'hospital:finalizar_limpieza' cama.id %}">
-                                <i class="fas fa-check-circle me-2"></i>Finalizar Limpieza</a></li>
-
+                            <li><a class="dropdown-item text-danger fw-bold" href="{% url 'hospital:dar_alta_paciente' cama.paciente_actual.id %}">
+                                <i class="fas fa-sign-out-alt me-2"></i>Dar de Alta
+                            </a></li>
                         {% elif cama.estado == 'LIBRE' %}
-                            <li><a class="dropdown-item rounded-2 text-success fw-bold" href="#" data-bs-toggle="modal" data-bs-target="#modalInternar{{ cama.id }}">
+                            <li><a class="dropdown-item rounded-2 py-2 text-success fw-bold" href="#" data-bs-toggle="modal" data-bs-target="#modalInternar{{ cama.id }}">
                                 <i class="fas fa-user-plus me-2"></i>Internar Paciente</a></li>
                         {% endif %}
-                        
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item rounded-2" href="{% url 'hospital:cambiar_estado_cama' cama.id %}">
-                            <i class="fas fa-sync text-muted me-2"></i>Rotar Estado</a></li>
+                        <li><a class="dropdown-item" href="{% url 'hospital:cambiar_estado_cama' cama.id %}">
+                            <i class="fas fa-sync text-muted me-2"></i>Rotar Estado
+                        </a></li>
                     </ul>
                 </div>
 
                 {% if cama.estado == 'LIBRE' %}
                 <div class="modal fade" id="modalInternar{{ cama.id }}" tabindex="-1">
                     <div class="modal-dialog modal-dialog-centered">
-                        <form action="{% url 'hospital:internar_paciente' %}" method="POST" class="modal-content border-0 shadow" style="border-radius: 15px;">
+                        <form action="{% url 'hospital:internar_paciente' %}" method="POST" class="modal-content border-0 shadow">
                             {% csrf_token %}
                             <input type="hidden" name="cama_id" value="{{ cama.id }}">
                             <div class="modal-header bg-success text-white border-0">
-                                <h5 class="modal-title">Internar en Cama {{ cama.numero }}</h5>
+                                <h5 class="modal-title fw-bold">Internar en Cama {{ cama.numero }}</h5>
                                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                             </div>
                             <div class="modal-body p-4">
-                                <label class="fw-bold mb-2">Seleccione el Paciente:</label>
-                                <select name="paciente_id" class="form-select border-success" required>
-                                    <option value="">--- Seleccionar ---</option>
+                                <label class="form-label fw-bold">Seleccionar Paciente:</label>
+                                <select name="paciente_id" class="form-select rounded-3" required>
+                                    <option value="">--- Buscar Paciente ---</option>
                                     {% for p in pacientes_sin_cama %}
-                                    <option value="{{ p.id }}">{{ p.nombre_completo }} (CI: {{ p.ci }})</option>
+                                    <option value="{{ p.id }}">{{ p.nombre_completo }} ({{ p.dni|default:"S/D" }})</option>
                                     {% endfor %}
                                 </select>
                             </div>
                             <div class="modal-footer border-0">
-                                <button type="submit" class="btn btn-success w-100 rounded-pill">Confirmar Internación</button>
+                                <button type="submit" class="btn btn-success w-100 rounded-pill fw-bold">Confirmar Internación</button>
                             </div>
                         </form>
                     </div>
@@ -138,61 +141,132 @@
                 {% if cama.estado == 'OCUPADO' and cama.paciente_actual %}
                 <div class="modal fade" id="modalTraslado{{ cama.id }}" tabindex="-1">
                     <div class="modal-dialog modal-dialog-centered">
-                        <form action="{% url 'hospital:trasladar_paciente' cama.paciente_actual.id %}" method="POST" class="modal-content border-0 shadow" style="border-radius: 15px;">
+                        <form action="{% url 'hospital:trasladar_paciente' cama.paciente_actual.id %}" method="POST" class="modal-content border-0 shadow">
                             {% csrf_token %}
-                            <input type="hidden" name="tipo_movimiento" value="interno">
                             <div class="modal-header bg-info text-white border-0">
-                                <h5 class="modal-title">Trasladar a {{ cama.paciente_actual.nombre_completo }}</h5>
+                                <h5 class="modal-title fw-bold">Mover a: {{ cama.paciente_actual.nombre_completo }}</h5>
                                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                             </div>
                             <div class="modal-body p-4">
-                                <p class="text-muted small">Mover al paciente a una nueva ubicación dentro del hospital.</p>
-                                <label class="fw-bold mb-2">Cama de Destino (Disponibles):</label>
-                                <select name="nueva_cama_id" class="form-select border-info" required>
-                                    <option value="">--- Seleccionar Cama ---</option>
-                                    {% for libre in todas_las_camas_libres %}
-                                        <option value="{{ libre.id }}">
-                                            {{ libre.cuarto.especialidad.nombre }} - Cuarto {{ libre.cuarto.numero_cuarto }} - Cama {{ libre.numero }}
-                                        </option>
-                                    {% endfor %}
-                                </select>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Tipo de Movimiento:</label>
+                                    <select name="tipo_movimiento" class="form-select" required>
+                                        <option value="interno">Traslado Interno (Misma Sede)</option>
+                                        <option value="externo">Derivación Externa (Otro Hospital)</option>
+                                    </select>
+                                </div>
+
+                                <div id="camaList{{ cama.id }}">
+                                    <label class="form-label fw-bold">Seleccionar Nueva Cama:</label>
+                                    <select name="nueva_cama_id" class="form-select rounded-3">
+                                        <option value="">--- Camas Disponibles ---</option>
+                                        {% for c_libre in todas_las_camas_libres %}
+                                            <option value="{{ c_libre.id }}">
+                                                {{ c_libre.cuarto.especialidad.nombre }} - Cuarto {{ c_libre.cuarto.numero_cuarto }} - {{ c_libre.numero }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
                             </div>
                             <div class="modal-footer border-0">
-                                <button type="submit" class="btn btn-info text-white w-100 rounded-pill">Confirmar Traslado</button>
+                                <button type="submit" class="btn btn-info w-100 text-white rounded-pill fw-bold">Procesar Movimiento</button>
                             </div>
                         </form>
                     </div>
                 </div>
                 {% endif %}
 
-                {% endfor %} </div>
-        </div>
-        {% empty %}
-        <div class="col-12 text-center py-5">
-            <i class="fas fa-folder-open fs-1 text-muted mb-3"></i>
-            <p class="text-muted">No hay cuartos registrados para esta especialidad.</p>
+                {% endfor %}
+            </div>
         </div>
         {% endfor %}
     </div>
 </div>
 
+<div class="modal fade" id="modalNuevoCuarto" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <form action="{% url 'hospital:crear_cuarto' %}" method="POST" class="modal-content border-0 shadow">
+            {% csrf_token %}
+            <input type="hidden" name="hospital" value="{{ hospital.id }}">
+            <input type="hidden" name="especialidad" value="{{ especialidad.id }}">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title">Nuevo Cuarto en {{ especialidad.nombre }}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Número de Cuarto</label>
+                    <input type="text" name="numero_cuarto" class="form-control" placeholder="Ej: 101" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Piso</label>
+                    <input type="number" name="piso" class="form-control" value="1" required>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="submit" class="btn btn-dark w-100 rounded-pill">Crear Cuarto</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="modalNuevaCama" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <form action="{% url 'hospital:crear_cama' %}" method="POST" class="modal-content border-0 shadow">
+            {% csrf_token %}
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Añadir Cama</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Nombre/Número de Cama</label>
+                    <input type="text" name="numero" class="form-control" placeholder="Ej: Cama 01" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Asignar al Cuarto:</label>
+                    <select name="cuarto_id" class="form-select" required>
+                        <option value="">--- Seleccione un cuarto ---</option>
+                        {% for cuarto in cuartos %}
+                        <option value="{{ cuarto.id }}">Cuarto {{ cuarto.numero_cuarto }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="submit" class="btn btn-primary w-100 rounded-pill">Guardar Cama</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <style>
-    .btn-cama { transition: all 0.2s ease; border-style: dashed !important; }
-    .btn-cama:hover { transform: translateY(-5px); border-style: solid !important; box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
+    .btn-cama { transition: all 0.3s; border-style: dashed !important; }
+    .btn-cama:hover { transform: scale(1.05); border-style: solid !important; }
     .bg-danger-subtle { background-color: #fee2e2 !important; }
     .bg-success-subtle { background-color: #dcfce7 !important; }
     .bg-warning-subtle { background-color: #fef9c3 !important; }
-    .dropdown-item:hover { background-color: #f8fafc; color: #3b82f6; }
 </style>
 
 <script>
-    // Buscador rápido de cuartos
-    document.getElementById('buscadorCuarto').addEventListener('input', function(e) {
-        let filtro = e.target.value.toLowerCase();
-        document.querySelectorAll('.tarjeta-cuarto').forEach(card => {
-            let nro = card.dataset.nro.toLowerCase();
-            card.style.display = nro.includes(filtro) ? 'block' : 'none';
+    function filtrarCamas(estado) {
+        const camas = document.querySelectorAll('.contenedor-cama-individual');
+        camas.forEach(cama => {
+            if (estado === 'TODAS') {
+                cama.style.display = 'block';
+            } else {
+                cama.style.display = (cama.getAttribute('data-estado') === estado) ? 'block' : 'none';
+            }
         });
-    });
+    }
+
+    function toggleCamaList(select, divId) {
+        const div = document.getElementById(divId);
+        if (select.value === 'externo') {
+            div.style.display = 'none';
+        } else {
+            div.style.display = 'block';
+        }
+    }
 </script>
 {% endblock %}
