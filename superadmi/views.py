@@ -4,7 +4,7 @@ from django.db.models import Q, Sum
 from django.urls import reverse
 from django.core.paginator import Paginator
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import HttpResponse
 #para los reportes 
 from datetime import datetime
@@ -24,16 +24,18 @@ from .forms import (
     LoginForm, HospitalForm, UsuarioForm, RolForm, EspecialidadForm,
     ConfiguracionSistemaForm, RegistroPersonalForm, AsignarCapacidadForm, PacienteForm
 )
-
-# =================================================================
-# --- VISTAS DE ACCESO (LOGIN/LOGOUT) ---
+# --- FUNCIONES DE ACCESO (PROTECCIÓN POR ROL) ---
 # =================================================================
 
-from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
+def es_superadmin(user):
+    """Verifica si es Superadmin o el usuario maestro admin2"""
+    nombre_rol = getattr(user.rol, 'nombre', '').upper()
+    return 'SUPERADMI' in nombre_rol or user.username == 'admin2' or getattr(user, 'is_admin', False)
 
+def es_admin_o_superior(user):
+    """Verifica si es Administrador de hospital o Superadmin"""
+    nombre_rol = getattr(user.rol, 'nombre', '').upper()
+    return 'ADMIN' in nombre_rol or es_superadmin(user)
 # 1. Vista de Login
 def login_view(request):
     if request.user.is_authenticated:
@@ -58,9 +60,7 @@ def login_view(request):
 @login_required(login_url='superadmin:login')
 def dashboard_redirect(request):
     user = request.user 
-
-    # Caso Admin Lider / Superusuario por atributo o nombre específico
-    if getattr(user, 'is_admin', False) or user.username == 'admin2':
+    if es_superadmin(user):
         return redirect('superadmin:dashboard_superadmin')
 
     # Validar existencia de Rol para evitar errores de tipo 'NoneType'
@@ -95,10 +95,23 @@ def logout_view(request):
 # --- DASHBOARD PRINCIPAL ---
 # =================================================================
 @login_required(login_url='superadmin:login')
+@user_passes_test(es_admin_o_superior) # Solo Admins y Superadmins
 def dashboard_superadmin(request):
-    hospitales_qs = Hospital.objects.all()
+    user = request.user
     
-    # --- TALENTO HUMANO GLOBAL ---
+    # --- LÓGICA DE FILTRO POR HOSPITAL ---
+    # Si es Superadmin global ve todo, si es Admin de Hospital solo ve SU hospital
+    if es_superadmin(user) and user.username == 'admin2':
+        hospitales_qs = Hospital.objects.all()
+    else:
+        # Si el usuario tiene un hospital asignado, filtramos solo ese
+        if user.hospital:
+            hospitales_qs = Hospital.objects.filter(id=user.hospital.id)
+        else:
+            hospitales_qs = Hospital.objects.all()
+
+    # --- TALENTO HUMANO GLOBAL (Filtrado) ---
+    usuarios_base = Usuario.objects.filter(hospital__in=hospitales_qs) if not es_superadmin(user) else Usuario.objects.all()
     doctores_totales = Usuario.objects.filter(rol__nombre__icontains='DOCTOR').count()
     enfermeras_totales = Usuario.objects.filter(rol__nombre__icontains='ENFERMERA').count()
     administrativos_totales = Usuario.objects.filter(rol__nombre__icontains='ADMIN').count()
@@ -231,6 +244,7 @@ def dashboard_superadmin(request):
 # --- GESTIÓN DE HOSPITALES ---
 # =================================================================
 @login_required(login_url='superadmin:login')
+@user_passes_test(es_superadmin)
 def listar_hospitales(request):
     # Traemos la base de datos con prefetch para optimizar
     hospitales_db = Hospital.objects.all().prefetch_related('especialidades_asignadas__especialidad').order_by('-id')
@@ -312,16 +326,30 @@ def eliminar_hospital(request, pk):
 # --- GESTIÓN DE USUARIOS ---
 # =================================================================
 @login_required(login_url='superadmin:login')
+@user_passes_test(lambda u: es_admin_o_superior(u))
 def listar_usuarios(request):
-    # 1. Obtenemos TODOS para los contadores
-    todos_los_usuarios = Usuario.objects.all()
-    activos_count = todos_los_usuarios.filter(estado=True).count()
-    cirugia_count = todos_los_usuarios.filter(estado=False).count()
-    sedes_count = Hospital.objects.count()
+    user = request.user
+    q = request.GET.get('q')
+    if q:
+        usuarios_tabla = usuarios_tabla.filter(
+        Q(nombre_completo__icontains=q) | Q(email__icontains=q)
+    )
+    # Filtro de pertenencia: Si no es superadmin total, solo ve su hospital
+    if es_superadmin(user) and user.username == 'admin2':
+        todos_los_usuarios = Usuario.objects.all()
+        hospitales_visibles = Hospital.objects.all()
+    else:
+        todos_los_usuarios = Usuario.objects.filter(hospital=user.hospital)
+        hospitales_visibles = Hospital.objects.filter(id=user.hospital.id) if user.hospital else Hospital.objects.none()
 
-    # 2. Filtro para la tabla
+    # Contadores basados en el filtro anterior
+    activos_count = todos_los_usuarios.filter(estado=True).count()
+    cirugia_count = todos_los_usuarios.filter(estado=False).count() # 'En Cirugía' o Inactivos
+    sedes_count = hospitales_visibles.count()
+
+    # Filtro de estado por GET
     estado_filtro = request.GET.get('estado')
-    usuarios_tabla = todos_los_usuarios.select_related('hospital', 'especialidad')
+    usuarios_tabla = todos_los_usuarios.select_related('hospital', 'especialidad', 'rol')
 
     if estado_filtro == 'disponible':
         usuarios_tabla = usuarios_tabla.filter(estado=True)
@@ -333,7 +361,7 @@ def listar_usuarios(request):
         'activos_count': activos_count,
         'cirugia_count': cirugia_count,
         'sedes_count': sedes_count,
-        'hospitales': Hospital.objects.all(),
+        'hospitales': hospitales_visibles,
         'especialidades': Especialidad.objects.all(),
         'roles_list': Rol.objects.all(),
     }
@@ -392,36 +420,45 @@ def registrar_personal(request):
     if request.method == 'POST':
         nombre = request.POST.get('nombre_completo')
         email = request.POST.get('email')
-        # CAPTURAMOS EL ROL DEL FORMULARIO
-        rol_elegido = request.POST.get('rol_administrativo') # O 'rol', verifica el 'name' en tu HTML
+        rol_id = request.POST.get('rol_administrativo')
+        h_id = request.POST.get('hospital')
+
+        # Seguridad: Si el usuario no es superadmin, forzamos su propio hospital
+        if not es_superadmin(request.user) or request.user.username != 'admin2':
+            h_id = request.user.hospital.id if request.user.hospital else h_id
 
         try:
             if Usuario.objects.filter(email=email).exists():
-                messages.error(request, f"Error: El correo {email} ya está registrado.")
+                messages.error(request, f"El correo {email} ya existe.")
                 return redirect('superadmin:listar_usuarios')
 
+            rol_instancia = get_object_or_404(Rol, id=rol_id)
+            
             nuevo_usuario = Usuario(
                 username=email,
                 nombre_completo=nombre,
                 email=email,
-                rol=rol_elegido,  # <--- ¡ESTA LÍNEA ES LA QUE FALTA!
+                rol=rol_instancia,
                 telefono=request.POST.get('telefono'),
                 ciudad=request.POST.get('ciudad'),
                 direccion=request.POST.get('direccion'),
                 turno_asignado=request.POST.get('turno'),
-                estado=request.POST.get('estado') == 'true'
+                estado=request.POST.get('estado') == 'true',
+                hospital_id=h_id,
+                especialidad_id=request.POST.get('especialidad')
             )
-            
-            # ... resto de tu código (hospital, especialidad, password)
-            h_id = request.POST.get('hospital')
-            e_id = request.POST.get('especialidad')
-            if h_id: nuevo_usuario.hospital_id = h_id
-            if e_id: nuevo_usuario.especialidad_id = e_id
             
             nuevo_usuario.set_password(request.POST.get('password'))
             nuevo_usuario.save()
 
-            messages.success(request, f"El especialista {nombre} registrado con éxito con el rol {rol_elegido}.")
+            Auditoria.objects.create(
+                usuario=request.user,
+                accion="REGISTRO",
+                detalles=f"Registró nuevo personal: {nombre} con rol {rol_instancia.nombre}",
+                tabla_afectada="Usuario"
+            )
+
+            messages.success(request, f"Especialista {nombre} registrado con éxito.")
             
         except Exception as e:
             messages.error(request, f"Error al registrar: {e}")
@@ -462,9 +499,15 @@ def desactivar_usuario(request, pk):
 
 @login_required(login_url='superadmin:login')
 def listar_capacidades(request):
-    capacidades = HospitalEspecialidad.objects.all().select_related('hospital', 'especialidad')
-    return render(request, 'superadmi/capacidades/listar.html', {'capacidades': capacidades})
-
+    user = request.user
+    if es_superadmin(user) and user.username == 'admin2':
+        capacidades = HospitalEspecialidad.objects.all()
+    else:
+        capacidades = HospitalEspecialidad.objects.filter(hospital=user.hospital)
+        
+    return render(request, 'superadmi/capacidades/listar.html', {
+        'capacidades': capacidades.select_related('hospital', 'especialidad')
+    })
 @login_required(login_url='superadmin:login')
 def asignar_capacidad(request):
     if request.method == 'POST':
@@ -580,12 +623,16 @@ def configuracion_sistema(request):
 #---------------
 @login_required
 def reporte_hospital_pdf(request, hospital_id):
+    # Seguridad: Un admin no puede ver reporte de otro hospital
+    if not es_superadmin(request.user) or request.user.username != 'admin2':
+        if request.user.hospital and request.user.hospital.id != int(hospital_id):
+            return HttpResponse("No tienes permiso para ver este reporte.", status=403)
+
     hospital = get_object_or_404(Hospital, id=hospital_id)
     camas = Cama.objects.filter(cuarto__hospital=hospital)
     
-    # --- NUEVA LÓGICA DE PERSONAL SINCRONIZADA ---
-    # Contamos el personal asignado a este hospital específico
-    # Asegúrate de que tu modelo Personal tenga un campo 'cargo' o similar
+    # Contadores de personal sincronizados
+    usuarios_hosp = Usuario.objects.filter(hospital=hospital)
     medicos_count = Usuario.objects.filter(hospital=hospital, rol__nombre='MEDICO').count()
     enfermeras_count =Usuario.objects.filter(hospital=hospital, rol__nombre='ENFERMERA').count()
     admin_count = Usuario.objects.filter(hospital=hospital, rol__nombre='ADMINISTRATIVO').count()

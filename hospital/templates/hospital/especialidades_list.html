@@ -77,7 +77,9 @@
             </div>
         </div>
     </div>
-
+    {% if pueden_editar %}
+    <a href="{% url 'hospital:crear_cuarto' %}" class="btn btn-sm btn-primary">Añadir Cuarto</a>
+{% endif %}
     <div class="row g-4" id="contenedorTarjetas">
         {% for esp in especialidades %}
         <div class="col-xl-4 col-md-6 tarjeta-item">
