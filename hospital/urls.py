@@ -98,4 +98,6 @@ path('vincular-ambulancia/<int:paciente_id>/<int:ambulancia_id>/',
      path('incidencia/nueva/<str:tipo>/', views.registrar_incidencia, name='registrar_incidencia'),
      ###funcion roles 
      path('landing/', views.landing_page, name='landing_page'),
+     ###CIE URLS
+     path('buscar-cie10/', views.buscar_cie10_ajax, name='buscar_cie10_ajax'),
 ]

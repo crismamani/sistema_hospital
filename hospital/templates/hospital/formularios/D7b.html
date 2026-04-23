@@ -278,7 +278,35 @@
     display: block !important;
     width: 100% !important;
   }
+/* 1. Hace que el cuadrito se comporte como un campo de texto */
+.select2-container--default .select2-selection--single {
+        border: none !important;
+        background: transparent !important;
+        height: 20px !important;
+        display: flex !important;
+        align-items: center !important;
+        cursor: text !important; /* Indica al navegador que se puede escribir */
+    }
 
+    /* 2. Quita la flechita de la derecha que quita espacio y bloquea clics */
+    .select2-selection__arrow {
+        display: none !important;
+    }
+
+    /* 3. Estilo del texto que escribes para que sea legible */
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        font-size: 11px !important;
+        line-height: 20px !important;
+        padding-left: 5px !important;
+        color: #000 !important;
+    }
+
+    /* 4. Asegura que el buscador sea más grande que el cuadrito para ver los nombres */
+    .select2-dropdown {
+        min-width: 300px !important;
+        border: 1px solid #000 !important;
+        z-index: 9999;
+    }
   /* 4. POSICIONAR EL FORMULARIO EN TODA LA HOJA */
   .page { 
     position: absolute !important;
@@ -489,23 +517,36 @@
   <div class="seccion">
     <div class="seccion-header">DIAGNOSTICOS PRESUNTIVOS (C5)</div>
     <div class="seccion-body" style="padding:4px 6px;">
-      <div class="diag-row">
-        <label>a)</label>
-        <input type="text" class="diag-desc">
-        <div class="cie"><label>CIE – 10</label><input type="text"></div>
+      
+      <div class="diag-row" style="display: flex; align-items: center; margin-bottom: 5px;">
+        <label style="width: 20px;">a)</label>
+        <input type="text" name="desc_a" class="diag-desc" style="flex-grow: 1; border: none; border-bottom: 1px solid #000; margin-right: 10px;">
+        <div class="cie" style="display: flex; align-items: center; border: 1px solid #000; padding: 2px; background-color: #fff;">
+          <label style="font-size: 11px; margin-right: 5px; font-weight: bold; white-space: nowrap;">CIE – 10</label>
+          <select name="cie_a" class="cie-buscador" style="width: 80px;" tabindex="-1"></select>
+        </div>
       </div>
-      <div class="diag-row">
-        <label>b)</label>
-        <input type="text" class="diag-desc">
-        <div class="cie"><label>CIE – 10</label><input type="text"></div>
+  
+      <div class="diag-row" style="display: flex; align-items: center; margin-bottom: 5px;">
+        <label style="width: 20px;">b)</label>
+        <input type="text" name="desc_b" class="diag-desc" style="flex-grow: 1; border: none; border-bottom: 1px solid #000; margin-right: 10px;">
+        <div class="cie" style="display: flex; align-items: center; border: 1px solid #000; padding: 2px; background-color: #fff;">
+          <label style="font-size: 11px; margin-right: 5px; font-weight: bold; white-space: nowrap;">CIE – 10</label>
+          <select name="cie_b" class="cie-buscador" style="width: 80px;" tabindex="-1"></select>
+        </div>
       </div>
-      <div class="diag-row">
-        <label>c)</label>
-        <input type="text" class="diag-desc">
-        <div class="cie"><label>CIE – 10</label><input type="text"></div>
+  
+      <div class="diag-row" style="display: flex; align-items: center;">
+        <label style="width: 20px;">c)</label>
+        <input type="text" name="desc_c" class="diag-desc" style="flex-grow: 1; border: none; border-bottom: 1px solid #000; margin-right: 10px;">
+        <div class="cie" style="display: flex; align-items: center; border: 1px solid #000; padding: 2px; background-color: #fff;">
+          <label style="font-size: 11px; margin-right: 5px; font-weight: bold; white-space: nowrap;">CIE – 10</label>
+          <select name="cie_c" class="cie-buscador" style="width: 80px;" tabindex="-1"></select>
+        </div>
       </div>
+  
     </div>
-  </div>
+</div>
 
   <!-- C6: TRATAMIENTO INICIAL -->
   <div class="seccion">
@@ -651,7 +692,43 @@
   <div style="text-align:center; margin-top:10px;">
     <button onclick="window.print()" style="padding:6px 20px; background:#222; color:#fff; border:none; font-size:11px; cursor:pointer; font-family:inherit; border-radius:2px;">🖨️ Imprimir / Guardar PDF</button>
   </div>
-
+  
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <script>
+    $(document).ready(function() {
+        $('.cie-buscador').select2({
+            ajax: {
+                url: "{% url 'hospital:buscar_cie10_ajax' %}",
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return { q: params.term };
+                },
+                processResults: function (data) {
+                    return { results: data.results };
+                },
+                cache: true
+            },
+            minimumInputLength: 1, // Permite buscar con una sola letra o número
+            placeholder: "Código...",
+            allowClear: true,
+            width: '120px'
+        });
+    
+        // Acción al seleccionar: Llena la descripción automáticamente
+        $('.cie-buscador').on('select2:select', function (e) {
+            var data = e.params.data;
+            // El formato del resultado es "ID - DESCRIPCION"
+            // Separamos la descripción para ponerla en la línea larga
+            var partes = data.text.split(' - ');
+            var descripcionJusta = partes.slice(1).join(' - ');
+            
+            $(this).closest('.diag-row').find('.desc-resultado').val(descripcionJusta);
+        });
+    });
+    </script>
 </div>
 </body>
 </html>

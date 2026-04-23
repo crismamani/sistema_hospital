@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import Cuarto, Cama, Paciente, Derivacion, EvolucionMedica, Ambulancia, FormularioD7b, FormularioD7, ContrarreferenciaD7a, ReporteDiario, IncidenciaCRUEM 
+from .models import Cuarto, Cama, Paciente, Derivacion, EvolucionMedica, Ambulancia, FormularioD7b, FormularioD7, ContrarreferenciaD7a, ReporteDiario, IncidenciaCRUEM, EnfermedadCIE10 
 from .forms import CuartoForm, CamaForm, PacienteForm, EvolucionMedicaForm, DerivacionForm, D7bForm, D7Form, ContrarreferenciaD7aForm,ReporteDiarioForm
 from superadmi.models import Hospital, Usuario, Especialidad
 from django.db.models import Count, Q, ExpressionWrapper, FloatField
@@ -11,7 +11,7 @@ from django.db import transaction
 from datetime import datetime
 from .decorators import solo_roles 
 from django.core.exceptions import PermissionDenied
-from django.http import HttpResponseBadRequest
+from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
 from .decorators import solo_personal_autorizado, solo_roles
 
 @login_required
@@ -1149,3 +1149,19 @@ def landing_page(request):
         return redirect('hospital:central_limpieza')
     
     return redirect('superadmin:login')
+##CIE
+def buscar_cie10_ajax(request):
+    # Capturamos lo que el médico escribe
+    termino = request.GET.get('q', '').strip()
+    
+    if len(termino) >= 2:
+        # Filtramos por código o por nombre de enfermedad
+        enfermedades = EnfermedadCIE10.objects.filter(
+            Q(codigo__icontains=termino) | Q(descripcion__icontains=termino)
+        )[:20] # Solo mostramos 20 para que sea veloz
+        
+        # Formateamos los datos para el buscador (Select2)
+        resultados = [{'id': e.codigo, 'text': f"{e.codigo} - {e.descripcion}"} for e in enfermedades]
+        return JsonResponse({'results': resultados})
+    
+    return JsonResponse({'results': []})

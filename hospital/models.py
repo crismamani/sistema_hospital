@@ -396,5 +396,16 @@ class IncidenciaCRUEM(models.Model):
 
     def __str__(self):
         return f"Incidente {self.nro_incidente} - {self.del_paciente}"
+###CIE
+class EnfermedadCIE10(models.Model):
+    # db_index=True hace que buscar entre 14,000 datos sea instantáneo
+    codigo = models.CharField(max_length=10, unique=True, db_index=True)
+    descripcion = models.TextField()
 
+    def __str__(self):
+        return f"{self.codigo} - {self.descripcion}"
+
+    class Meta:
+        verbose_name = "Enfermedad CIE-10"
+        verbose_name_plural = "Enfermedades CIE-10"
 

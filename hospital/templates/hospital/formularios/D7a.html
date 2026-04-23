@@ -128,7 +128,21 @@
     background: transparent;
     padding: 0 1px;
   }
+/* Quitar la flecha de Select2 para que parezca un input normal */
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    display: none !important;
+}
 
+.select2-container--default .select2-selection--single {
+    border: 1px solid #000 !important; /* Borde negro como tu formulario */
+    border-radius: 0px !important;
+    height: 22px !important; /* Ajuste a la altura de tus otros cuadros */
+}
+
+.select2-container .select2-selection--single .select2-selection__rendered {
+    padding-left: 5px !important;
+    line-height: 20px !important;
+}
   textarea {
     border: none;
     outline: none;
@@ -214,7 +228,25 @@
     /* Margen: Arriba 1cm, Derecha 1cm, Abajo 1cm, Izquierda 2cm (para dar el centímetro extra que pediste) */
     margin: 1cm 1cm 1cm 2cm !important; 
   }
+/* Quita la flechita de Select2 para que parezca un input de texto normal */
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    display: none !important;
+  }
 
+  .select2-container--default .select2-selection--single {
+    border: 1px solid #000 !important; /* Borde negro como el resto del formulario */
+    border-radius: 0px !important;
+    height: 24px !important; 
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  /* Ajusta el texto interno */
+  .select2-container .select2-selection--single .select2-selection__rendered {
+    line-height: 22px !important;
+    padding-left: 5px !important;
+    font-size: 13px !important;
+  }
   .controles, .no-print { display: none !important; }
 }
 </style>
@@ -289,20 +321,42 @@
         </div>
       </div>
 
-      <!-- C4 -->
       <div class="sec">
         <div class="sec-hdr">DIAGNOSTICO(S) DE INGRESO: (C4)</div>
-        <div class="diag-row"><span class="diag-lbl">a)</span><input type="text" class="diag-inp"><div class="cie-g"><span>CIE – 10</span><input type="text"></div></div>
-        <div class="diag-row"><span class="diag-lbl">b)</span><input type="text" class="diag-inp"><div class="cie-g"><span>CIE – 10</span><input type="text"></div></div>
-        <div class="diag-row"><span class="diag-lbl">c)</span><input type="text" class="diag-inp"><div class="cie-g"><span>CIE – 10</span><input type="text"></div></div>
+        <div class="diag-row">
+          <span class="diag-lbl">a)</span>
+          <input type="text" name="desc_ingreso_a" class="diag-inp desc-resultado">
+          <div class="cie-g"><span>CIE – 10</span><select name="cie_ingreso_a" class="cie-buscador" style="width: 100px;"></select></div>
+        </div>
+        <div class="diag-row">
+          <span class="diag-lbl">b)</span>
+          <input type="text" name="desc_ingreso_b" class="diag-inp desc-resultado">
+          <div class="cie-g"><span>CIE – 10</span><select name="cie_ingreso_b" class="cie-buscador" style="width: 100px;"></select></div>
+        </div>
+        <div class="diag-row">
+          <span class="diag-lbl">c)</span>
+          <input type="text" name="desc_ingreso_c" class="diag-inp desc-resultado">
+          <div class="cie-g"><span>CIE – 10</span><select name="cie_ingreso_c" class="cie-buscador" style="width: 100px;"></select></div>
+        </div>
       </div>
-
-      <!-- C5 -->
+      
       <div class="sec">
         <div class="sec-hdr">DIAGNOSTICO(S) DE EGRESO SEGÚN CIE - 10: (C5)</div>
-        <div class="diag-row"><span class="diag-lbl">a)</span><input type="text" class="diag-inp"><div class="cie-g"><span>CIE – 10</span><input type="text"></div></div>
-        <div class="diag-row"><span class="diag-lbl">b)</span><input type="text" class="diag-inp"><div class="cie-g"><span>CIE – 10</span><input type="text"></div></div>
-        <div class="diag-row"><span class="diag-lbl">c)</span><input type="text" class="diag-inp"><div class="cie-g"><span>CIE – 10</span><input type="text"></div></div>
+        <div class="diag-row">
+          <span class="diag-lbl">a)</span>
+          <input type="text" name="desc_egreso_a" class="diag-inp desc-resultado">
+          <div class="cie-g"><span>CIE – 10</span><select name="cie_egreso_a" class="cie-buscador" style="width: 100px;"></select></div>
+        </div>
+        <div class="diag-row">
+          <span class="diag-lbl">b)</span>
+          <input type="text" name="desc_egreso_b" class="diag-inp desc-resultado">
+          <div class="cie-g"><span>CIE – 10</span><select name="cie_egreso_b" class="cie-buscador" style="width: 100px;"></select></div>
+        </div>
+        <div class="diag-row">
+          <span class="diag-lbl">c)</span>
+          <input type="text" name="desc_egreso_c" class="diag-inp desc-resultado">
+          <div class="cie-g"><span>CIE – 10</span><select name="cie_egreso_c" class="cie-buscador" style="width: 100px;"></select></div>
+        </div>
       </div>
 
       <!-- C6 -->
@@ -443,6 +497,52 @@
   
     // Ejecutar al cargar
     window.onload = updatePage;
+  </script>
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  
+  <script>
+  $(document).ready(function() {
+      // 1. Inicializar todos los buscadores de la página
+      $('.cie-buscador').select2({
+          ajax: {
+              url: "{% url 'hospital:buscar_cie10_ajax' %}", // Tu vista de Django que busca en el Excel
+              dataType: 'json',
+              delay: 150,
+              data: function (params) {
+                  return { q: params.term };
+              },
+              processResults: function (data) {
+                  return { results: data.results };
+              }
+          },
+          minimumInputLength: 1,
+          placeholder: "Cód...",
+          allowClear: true,
+          width: 'resolve'
+      });
+  
+      // 2. Acción cuando el médico selecciona una enfermedad
+      $('.cie-buscador').on('select2:select', function (e) {
+          var data = e.params.data;
+          // Separamos el código de la descripción (Ej: "A01 - Fiebre tifoidea")
+          var partes = data.text.split(' - ');
+          var descripcionJusta = partes.slice(1).join(' - ');
+          
+          // Buscamos el input de la izquierda (diag-inp) y le ponemos la descripción
+          $(this).closest('.diag-row').find('.desc-resultado').val(descripcionJusta);
+      });
+  
+      // 3. EL ARREGLO PARA QUE PUEDAS ESCRIBIR DIRECTO
+      // Esto fuerza el foco al cuadro de búsqueda en cuanto se abre
+      $(document).on('select2:open', function(e) {
+          // Un pequeño retraso para asegurar que el navegador ya dibujó el cuadro
+          setTimeout(function() {
+              document.querySelector('.select2-search__field').focus();
+          }, 10);
+      });
+  });
   </script>
   </body>
   </html>
