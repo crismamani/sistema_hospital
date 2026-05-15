@@ -1,158 +1,123 @@
 {% extends 'superadmi/base.html' %}
-
 {% block content %}
 <style>
-  /* --- 1. PROTOCOLO DE LIMPIEZA TOTAL (PANTALLA Y SISTEMA) --- */
-  
-  /* Ocultar menús y barras del sistema en la web */
-  header, nav, aside, .main-sidebar, .sidebar, .navbar, .main-header, .main-footer, .brand-link, #sidebar-wrapper {
-    display: none !important;
-  }
-  
-  /* Forzar que el contenedor de Django ignore el espacio del sidebar */
-  .content-wrapper, .main-content, #page-content-wrapper, main {
-    margin-left: 0 !important;
-    padding: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    background: #c8c8c8 !important; /* Fondo gris de escritorio */
-    min-height: 100vh;
-  }
-
-  /* --- 2. TRUCO MAESTRO PARA IMPRESIÓN (SOLO EL FORMULARIO) --- */
-  @media print {
-    /* 1. Ocultar TODO el cuerpo del sistema */
-    body * {
-      visibility: hidden !important;
-    }
-
-    /* 2. Mostrar SOLO el formulario y lo que tiene adentro */
-    .super-contenedor, .super-contenedor *, .formulario, .formulario * {
-      visibility: visible !important;
-    }
-
-    /* 3. Posicionar el formulario arriba a la izquierda para que no deje huecos */
-    .super-contenedor {
-      position: absolute !important;
-      left: 0 !important;
-      top: 0 !important;
-      width: 100% !important;
-      padding: 0 !important;
-      margin: 0 !important;
-    }
-
-    .formulario {
-      box-shadow: none !important;
-      border: 1px solid black !important;
-      width: 100% !important;
-      margin: 0 !important;
-    }
-
-    /* Ocultar botones y enlaces en el papel */
-    .print-btn, a, .footer-slogan + a {
+    /* 1. LIMPIEZA DE INTERFAZ */
+    header, nav, aside, .main-sidebar, .sidebar, .navbar, .main-header, .main-footer, .brand-link, #sidebar-wrapper {
       display: none !important;
     }
-
-    @page {
-      margin: 0.5cm;
+    
+    .content-wrapper, .main-content, #page-content-wrapper, main {
+      margin-left: 0 !important;
+      padding: 0 !important;
+      width: 100% !important;
+      background: #c8c8c8 !important;
     }
-  }
-
-  /* --- 3. TU DISEÑO ORIGINAL (SIN CAMBIOS) --- */
-  :root {
-    --azul: #1a3a6b;
-    --azul-medio: #2355a0;
-    --celeste: #b8d4ee;
-    --celeste-claro: #d6e9f8;
-    --celeste-fondo: #e8f2fb;
-    --dorado: #c8a832;
-    --blanco: #ffffff;
-    --borde: #2355a0;
-    --gris-input: #f0f6fc;
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  .super-contenedor {
-    font-family: 'Courier New', Courier, monospace;
-    background: #c8c8c8;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px;
-    min-height: 100vh;
-  }
-
-  .formulario {
-    background: var(--celeste-fondo);
-    border: 2px solid var(--dorado);
-    width: 650px;
-    padding: 0;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-  }
-
-  .titulo-bloque {
-    background: var(--azul);
-    text-align: center;
-    padding: 5px;
-    border-bottom: 2px solid var(--dorado);
-  }
-  .titulo-bloque .titulo1 { font-size: 11px; font-weight: bold; color: var(--dorado); text-transform: uppercase; }
-  .titulo-bloque .titulo2 { font-size: 13px; font-weight: bold; color: var(--blanco); text-transform: uppercase; }
-
-  .seccion { background: var(--celeste-fondo); border-bottom: 1px solid var(--borde); padding: 6px 10px; }
-  .fila { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; flex-wrap: wrap; }
-  label { font-size: 8px; font-weight: bold; color: var(--azul); text-transform: uppercase; white-space: nowrap; }
-
-  input[type="text"], input[type="date"], input[type="time"], textarea, select {
-    background: var(--gris-input);
-    border: 1px solid var(--borde);
-    font-size: 9px;
-    font-family: 'Courier New', Courier, monospace;
-    padding: 2px 4px;
-    height: 18px;
-  }
-
-  .sep-label {
-    background: var(--azul);
-    color: var(--blanco);
-    font-size: 8px;
-    font-weight: bold;
-    text-align: center;
-    padding: 4px;
-    text-transform: uppercase;
-    border-top: 1px solid var(--dorado);
-    border-bottom: 1px solid var(--dorado);
-  }
-
-  .tabla-solucion { width: 100%; border-collapse: collapse; font-size: 8px; }
-  .tabla-solucion th { background: var(--azul); color: var(--blanco); border: 1px solid var(--borde); padding: 3px; font-size: 7.5px; }
-  .tabla-solucion td { border: 1px solid var(--borde); background: var(--gris-input); }
-  .tabla-solucion input { width: 100%; border: none; height: 18px; background: transparent; }
-
-  .footer-slogan {
-    background: var(--azul);
-    text-align: center;
-    color: var(--dorado);
-    font-size: 10px;
-    font-weight: bold;
-    padding: 8px;
-    border-top: 2px solid var(--dorado);
-  }
-
-  .print-btn {
-    display: block;
-    width: 200px;
-    margin: 10px auto;
-    padding: 10px;
-    background: var(--dorado);
-    color: var(--azul);
-    font-weight: bold;
-    border: none;
-    cursor: pointer;
-    text-transform: uppercase;
-  }
-</style>
+  
+    /* 2. PROTOCOLO DE IMPRESIÓN "TODO EN UNA HOJA" */
+    @media print {
+      @page {
+        size: letter;
+        margin: 0.3cm; /* Reducimos margen de papel para ganar altura */
+      }
+  
+      html, body {
+        height: 100% !important;
+        overflow: hidden !important;
+        background: white !important;
+      }
+  
+      body * { visibility: hidden !important; }
+  
+      .super-contenedor, .super-contenedor *, .formulario, .formulario * {
+        visibility: visible !important;
+      }
+  
+      .super-contenedor {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        display: flex !important;
+        justify-content: center !important;
+        padding: 0 !important;
+      }
+  
+      .formulario {
+        width: 98% !important; 
+        margin: 0 auto !important;
+        border: 2px solid #1a3a6b !important;
+        
+        /* AJUSTE DE ESCALA DINÁMICO */
+        transform: scale(0.96); 
+        transform-origin: top center;
+        
+        page-break-inside: avoid !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+  
+      /* REDUCCIÓN ESTRATÉGICA DE FUENTES Y ESPACIOS */
+      label { 
+        font-size: 8.5px !important; 
+        line-height: 1 !important; 
+      }
+      
+      input, select, textarea { 
+        font-size: 9px !important; 
+        height: 17px !important; /* Celdas ligeramente más bajas */
+        padding: 0 3px !important;
+      }
+  
+      .seccion { 
+        padding: 3px 10px !important; /* Menos "aire" entre secciones */
+      }
+  
+      .sep-label { 
+        padding: 3px !important; 
+        font-size: 9px !important; 
+      }
+  
+      /* COMPACTACIÓN DEL ÁREA DE FIRMAS */
+      .footer-slogan { 
+        font-size: 8px !important; 
+        padding: 2px !important; 
+        margin-top: 2px !important;
+      }
+  
+      .print-btn, .no-print, #salir-btn { display: none !important; }
+    }
+  
+    /* 3. DISEÑO BASE PARA PANTALLA */
+    .super-contenedor {
+      font-family: 'Courier New', Courier, monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 15px;
+    }
+  
+    .formulario {
+      background: #e8f2fb;
+      border: 2px solid #c8a832;
+      width: 900px;
+      padding: 0;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
+  
+    .seccion { padding: 4px 12px; border-bottom: 1px solid #1a3a6b; }
+    .fila { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+    
+    .sep-label {
+      background: #1a3a6b;
+      color: white;
+      text-align: center;
+      padding: 5px;
+      text-transform: uppercase;
+      border-top: 1px solid #c8a832;
+      font-weight: bold;
+      font-size: 9px;
+    }
+  </style>
 
 <div class="super-contenedor">
   <button class="print-btn" onclick="window.print()">🖨 Imprimir Formulario</button>

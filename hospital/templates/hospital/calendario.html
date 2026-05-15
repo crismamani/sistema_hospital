@@ -1,10 +1,9 @@
 {% extends 'superadmi/base.html' %}
 {% load static %}
-
 {% block content %}
 <style>
-  /* Contenedor Principal Estilo Formulario */
-  .form-unificado {
+ /* --- ESTILOS DE PANTALLA (Se mantienen) --- */
+ .form-unificado {
     background: #fff;
     width: 100%;
     max-width: 900px;
@@ -15,7 +14,6 @@
     overflow: hidden;
   }
 
-  /* Encabezado Institucional */
   .header-institucional {
     background: #cce6f4;
     border-bottom: 3px solid #1a4e8a;
@@ -26,129 +24,76 @@
   }
   
   .logo-cruem {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: #1a4e8a;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    font-weight: bold;
-    text-align: center;
-    line-height: 1.2;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    width: 60px; height: 60px; border-radius: 50%;
+    background: #1a4e8a; color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: bold; text-align: center;
+    line-height: 1.2; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
   }
 
   .titulo-hospital {
-    background: #1a4e8a;
-    color: white;
-    font-size: 16px;
-    font-weight: bold;
-    text-align: center;
-    padding: 8px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    background: #1a4e8a; color: white;
+    font-size: 16px; font-weight: bold; text-align: center;
+    padding: 8px; text-transform: uppercase; letter-spacing: 1px;
   }
 
-  /* Estilos del Calendario */
-  .calendar-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 2px;
-    background: #fff;
-  }
-  
-  .calendar-table th {
-    background: #f1f5f9;
-    color: #1a4e8a;
-    font-size: 11px;
-    padding: 10px;
-    text-transform: uppercase;
-    border: 1px solid #dee2e6;
-  }
+  .calendar-table { width: 100%; border-collapse: separate; border-spacing: 2px; background: #fff; }
+  .calendar-table th { background: #f1f5f9; color: #1a4e8a; font-size: 11px; padding: 10px; text-transform: uppercase; border: 1px solid #dee2e6; }
+  .calendar-table td { width: 14.28%; height: 90px; border: 1px solid #dee2e6; vertical-align: top; position: relative; }
 
-  .calendar-table td {
-    width: 14.28%;
-    height: 90px;
-    border: 1px solid #dee2e6;
-    vertical-align: top;
-    position: relative;
-    transition: all 0.2s;
-  }
+  .day-cell { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; text-decoration: none !important; }
+  .day-number { font-size: 22px; font-weight: 900; font-style: italic; color: #1a4e8a; }
 
-  .day-cell {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    text-decoration: none !important;
-  }
+  .has-report { background-color: #28a745 !important; }
+  .has-report .day-number { color: white !important; }
+  .status-label { font-size: 8px; font-weight: bold; color: white; background: rgba(0,0,0,0.2); padding: 2px 5px; border-radius: 10px; margin-top: 5px; }
+  .day-empty { background-color: #f8fbff; }
+  .seccion-historial { padding: 20px; background: #fff; border-top: 2px solid #1a4e8a; }
+  .table-custom { font-size: 13px; }
+  .table-custom thead { background: #1a4e8a; color: white; }
+  .legend-box { display: flex; gap: 15px; justify-content: center; padding: 10px; font-size: 11px; background: #f8f9fa; }
 
-  .day-number {
-    font-size: 22px;
-    font-weight: 900;
-    font-style: italic;
-    color: #1a4e8a;
-  }
-
-  /* Estado: Día con Reporte (VERDE) */
-  .has-report {
-    background-color: #28a745 !important;
-  }
-  .has-report .day-number {
-    color: white !important;
-  }
-  .status-label {
-    font-size: 8px;
-    font-weight: bold;
-    color: white;
-    background: rgba(0,0,0,0.2);
-    padding: 2px 5px;
-    border-radius: 10px;
-    margin-top: 5px;
-  }
-
-  /* Estado: Vacío (AZUL TENUE) */
-  .day-empty {
-    background-color: #f8fbff;
-  }
-  .day-empty:hover {
-    background-color: #e3f2fd;
-    border: 2px solid #1a4e8a;
-  }
-
-  /* Sección de Historial (Tabla inferior) */
-  .seccion-historial {
-    padding: 20px;
-    background: #fff;
-    border-top: 2px solid #1a4e8a;
-  }
-
-  .table-custom {
-    font-size: 13px;
-  }
-  .table-custom thead {
-    background: #1a4e8a;
-    color: white;
-  }
-
-  .legend-box {
-    display: flex;
-    gap: 15px;
-    justify-content: center;
-    padding: 10px;
-    font-size: 11px;
-    background: #f8f9fa;
-  }
-
+  /* --- BLOQUE DE IMPRESIÓN ACTUALIZADO --- */
   @media print {
-    .no-print, .btn, .controls { display: none !important; }
-    .form-unificado { border: none; box-shadow: none; margin: 0; }
+    @page {
+      size: letter; /* O 'legal' si usas Oficio */
+      margin: 0.5cm; /* Márgenes mínimos para maximizar espacio */
+    }
+
+    /* Ocultar todo lo que no sea el formulario */
+    .no-print, .btn, .controls, nav, .sidebar, footer { 
+      display: none !important; 
+    }
+
+    body {
+      background: white !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    .form-unificado {
+      width: 100% !important;
+      max-width: 100% !important; /* Quita el límite de 900px */
+      margin: 0 !important;
+      border: none !important;
+      box-shadow: none !important;
+      border-radius: 0 !important;
+    }
+
+    /* Forzar que los colores de fondo se impriman en Chrome/Edge/Safari */
+    .has-report, .header-institucional, .titulo-hospital, .logo-cruem {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    /* Ajustar las celdas para que no se vean tan pequeñas en papel */
+    .calendar-table td {
+      height: 1.5cm !important; /* Ajusta esto según cuánto quieras que llene la hoja */
+    }
+
+    .day-number {
+      font-size: 18pt !important;
+    }
   }
 </style>
 
@@ -248,7 +193,7 @@
     renderCal();
 
     function renderCal() {
-        const month = parseInt(document.getElementById('calMonth').value) - 1; // JS usa 0-11
+        const month = parseInt(document.getElementById('calMonth').value) - 1; 
         const year = parseInt(document.getElementById('calYear').value);
         
         const firstDay = new Date(year, month, 1).getDay(); 
@@ -294,7 +239,6 @@
     function cambiarPeriodo() {
         const m = document.getElementById('calMonth').value;
         const y = document.getElementById('calYear').value;
-        // Recarga enviando el nuevo periodo a la vista de Django
         window.location.href = `?mes=${m}&anio=${y}`;
     }
 
@@ -303,8 +247,12 @@
         const y = document.getElementById('calYear').value;
         const diaStr = d.toString().padStart(2, '0');
         const fechaStr = `${y}-${m}-${diaStr}`;
-        
         window.location.href = `{% url 'hospital:crear_reporte' %}?fecha=${fechaStr}`;
+    }
+
+    // Función para disparar la impresión
+    function imprimirPagina() {
+        window.print();
     }
 </script>
 {% endblock %}

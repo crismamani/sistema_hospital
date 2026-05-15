@@ -51,6 +51,8 @@ urlpatterns = [
     # RED HOSPITALARIA Y DERIVACIONES
     # ==========================================
     path('especialidad/crear/', views.crear_especialidad, name='crear_especialidad'),
+    path('especialidad/editar/<int:especialidad_id>/', views.editar_especialidad, name='editar_especialidad'),
+    path('especialidad/eliminar/<int:especialidad_id>/', views.eliminar_especialidad, name='eliminar_especialidad'),
     path('buscar-cupo/<int:especialidad_id>/', views.buscar_cupo_red, name='buscar_cupo_red'),
     
     # Proceso de Traslado

@@ -14,9 +14,9 @@ urlpatterns = [
     # Apps con sus respectivos prefijos y namespaces
     path('superadmin/', include('superadmi.urls', namespace='superadmin')),
     path('gestion/', include('admin_app.urls', namespace='admin_app')),
-    path('medico/', include('Doctor.urls', namespace='doctor')),
-    path('enfermeria/', include('Enfermera.urls', namespace='enfermera')),
-    path('api/', include('hospital_api.urls')),
+    path('medico/', include('doctor.urls', namespace='doctor')),
+    path('enfermeria/', include('enfermera.urls', namespace='enfermera')),
+    ##path('api/', include('hospital_api.urls')),
     path('hospital/', include('hospital.urls')),
 ]
 

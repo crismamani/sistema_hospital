@@ -61,17 +61,21 @@
                 </div>
                 <div class="col-md-6 px-4 border-end border-white border-opacity-10">
                     <div class="row g-3">
-                        <div class="col-4">
+                        <div class="col-3">
                             <small class="d-block text-info fw-bold small">DOCTORES</small>
-                            <h4 class="fw-bold mb-0">{{ personal.doctores }}</h4>
+                            <h4 class="fw-bold mb-0">{{ personal_global.doctores }}</h4>
                         </div>
-                        <div class="col-4">
+                        <div class="col-3">
                             <small class="d-block text-success fw-bold small">ENFERMERÍA</small>
-                            <h4 class="fw-bold mb-0">{{ personal.enfermeras }}</h4>
+                            <h4 class="fw-bold mb-0">{{ personal_global.enfermeras }}</h4>
                         </div>
-                        <div class="col-4 text-warning">
-                            <small class="d-block fw-bold small">EN ALERTA</small>
-                            <h4 class="fw-bold mb-0">{{ global.hosp_criticos }}</h4>
+                        <div class="col-3">
+                            <small class="d-block text-warning fw-bold small">ADMIN.</small>
+                            <h4 class="fw-bold mb-0">{{ personal_global.administrativos }}</h4>
+                        </div>
+                        <div class="col-3">
+                            <small class="d-block text-light fw-bold small">LIMPIEZA</small>
+                            <h4 class="fw-bold mb-0">{{ personal_global.limpieza }}</h4>
                         </div>
                     </div>
                 </div>
@@ -121,19 +125,17 @@
                     <div class="col-6">
                         <div class="staff-card shadow-sm">
                             <div class="staff-icon bg-info-subtle text-info"><i class="fas fa-user-tie"></i></div>
-                            <div class="staff-info"><b>{{ hosp.h_admins|default:"0" }}</b><small>Admin.</small></div>
+                            <div class="staff-info"><b>{{ hosp.h_admin }}</b><small>Admin.</small></div>
                         </div>
                     </div>
                     <div class="col-6">
                         <div class="staff-card shadow-sm">
                             <div class="staff-icon bg-warning-subtle text-warning"><i class="fas fa-broom"></i></div>
-                            <div class="staff-info"><b>{{ hosp.limpieza }}</b><small>Limpieza</small></div>
+                            <div class="staff-info"><b>{{ hosp.h_limpieza }}</b><small>Limpieza</small></div>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <div class="col-md-7 col-gestion d-flex flex-column">
+            </div> <div class="col-md-7 col-gestion d-flex flex-column">
                 <div class="flex-grow-1">
                     <h6 class="fw-bold text-muted small text-uppercase mb-3">Ocupación por Especialidad</h6>
                     <div class="table-responsive">
@@ -184,10 +186,7 @@
                         </a>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
-    {% endfor %}
+            </div> </div> </div> {% endfor %}
 </div>
 
 <script>

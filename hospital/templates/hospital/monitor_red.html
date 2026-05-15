@@ -203,9 +203,13 @@
                                 <span class="badge {% if deriv.prioridad == 'ALTA' %}bg-danger{% else %}bg-warning text-dark{% endif %}" style="font-size: 0.6rem;">{{ deriv.prioridad }}</span>
                             </div>
                             
-                            <div class="small mb-3 opacity-90">
-                                <div class="mb-1"><i class="fas fa-hospital-alt me-2 text-warning"></i>{{ deriv.hospital_origen.nombre }}</div>
-                                <div class="fw-bold"><i class="fas fa-map-marker-alt me-2 text-success"></i>{{ deriv.hospital_destino.nombre }}</div>
+                            <div class="small mb-3 text-light">
+                                <div class="mb-1 text-white-50">
+                                    <i class="fas fa-hospital-alt me-2 text-warning"></i>{{ deriv.hospital_origen.nombre }}
+                                </div>
+                                <div class="fw-bold text-white">
+                                    <i class="fas fa-map-marker-alt me-2 text-success"></i>{{ deriv.hospital_destino.nombre }}
+                                </div>
                             </div>
                             
                             {% if deriv.ambulancia %}
@@ -213,7 +217,7 @@
                                 <small class="text-info fw-bold"><i class="fas fa-ambulance me-2"></i>UNIDAD: {{ deriv.ambulancia.placa }}</small>
                             </div>
                             {% endif %}
-
+        
                             <div class="row g-2">
                                 <div class="col-6">
                                     <a href="{% url 'hospital:pdf_traslado' deriv.id %}" class="btn btn-sm btn-outline-light w-100 rounded-pill" style="font-size: 0.7rem; border-color: #555;">Orden PDF</a>
@@ -228,9 +232,6 @@
                 </div>
             </div>
         </div>
-    </div>
-</div>
-
 <script>
     // Buscador Instantáneo para la tabla de pacientes
     document.getElementById('inputBuscador')?.addEventListener('keyup', function() {

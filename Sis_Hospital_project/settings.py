@@ -20,12 +20,11 @@ INSTALLED_APPS = [
     
     # Tus aplicaciones
     'superadmi', 
-    'Enfermera', 
-    'Doctor', 
+    'enfermera', 
+    'doctor', 
     'admin_app',
     'hospital',
     'rest_framework',
-    'hospital_api',
 ]
 
 # --- MIDDLEWARE ---
@@ -62,8 +61,12 @@ WSGI_APPLICATION = 'Sis_Hospital_project.wsgi.application'
 # --- BASE DE DATOS ---
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'RED_HOSPITALARIA',
+        'USER': 'postgres',
+        'PASSWORD': 'admin123',
+        'HOST': '127.0.0.1',
+        'PORT': '5433',
     }
 }
 

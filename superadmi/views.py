@@ -100,21 +100,22 @@ def dashboard_superadmin(request):
     user = request.user
     
     # --- LÓGICA DE FILTRO POR HOSPITAL ---
-    # Si es Superadmin global ve todo, si es Admin de Hospital solo ve SU hospital
     if es_superadmin(user) and user.username == 'admin2':
         hospitales_qs = Hospital.objects.all()
     else:
-        # Si el usuario tiene un hospital asignado, filtramos solo ese
         if user.hospital:
             hospitales_qs = Hospital.objects.filter(id=user.hospital.id)
         else:
             hospitales_qs = Hospital.objects.all()
 
-    # --- TALENTO HUMANO GLOBAL (Filtrado) ---
-    usuarios_base = Usuario.objects.filter(hospital__in=hospitales_qs) if not es_superadmin(user) else Usuario.objects.all()
-    doctores_totales = Usuario.objects.filter(rol__nombre__icontains='DOCTOR').count()
-    enfermeras_totales = Usuario.objects.filter(rol__nombre__icontains='ENFERMERA').count()
-    administrativos_totales = Usuario.objects.filter(rol__nombre__icontains='ADMIN').count()
+    # --- TALENTO HUMANO GLOBAL (Sincronizado con el Filtro) ---
+    # Filtramos los usuarios que pertenecen a los hospitales del QuerySet actual
+    usuarios_filtrados = Usuario.objects.filter(hospital__in=hospitales_qs)
+    
+    doctores_totales = usuarios_filtrados.filter(rol__nombre__icontains='DOCTOR').count()
+    enfermeras_totales = usuarios_filtrados.filter(rol__nombre__icontains='ENFERMERA').count()
+    administrativos_totales = usuarios_filtrados.filter(rol__nombre__icontains='ADMIN').count()
+    limpieza_totales = usuarios_filtrados.filter(rol__nombre__icontains='LIMPIEZA').count() # Nueva categoría
     
     resumen_hospitales = []
     g_total_camas = 0
@@ -144,8 +145,14 @@ def dashboard_superadmin(request):
         h_admin = Usuario.objects.filter(hospital=hosp, rol__nombre__icontains='ADMIN').count()
         h_limpieza = Usuario.objects.filter(hospital=hosp, rol__nombre__icontains='LIMPIEZA').count()
 
-        if "3er" in hosp.nombre or "III" in hosp.nombre: h_3er_nivel += 1
-        else: h_2do_nivel += 1
+        # Conteo por niveles (basado en el nombre o puedes usar un campo nivel si lo tienes)
+        if "3er" in hosp.nombre or "III" in hosp.nombre: 
+            h_3er_nivel += 1
+        elif "2do" in hosp.nombre or "II" in hosp.nombre:
+            h_2do_nivel += 1
+        else:
+            # Puedes contar 1er nivel aquí si aplica
+            pass
 
         g_total_camas += c_total
         g_total_pacientes += Paciente.objects.filter(hospital=hosp, estado='INTERNADO').count()
@@ -162,34 +169,20 @@ def dashboard_superadmin(request):
         h_color = "danger" if porcentaje_hosp >= 90 else ("warning" if porcentaje_hosp >= 70 else "success")
         h_estado = "CRÍTICO" if porcentaje_hosp >= 90 else ("PREVENTIVO" if porcentaje_hosp >= 70 else "ESTABLE")
 
-        # ============================================================
-        # --- DETALLES ESPECIALIDADES (SINCRONIZACIÓN CORREGIDA) ---
-        # ============================================================
+        # DETALLES ESPECIALIDADES
         detalles_esp = []
-        
-        # En lugar de HospitalEspecialidad, buscamos especialidades que tengan cuartos en este hospital
-        especialidades_vivas_ids = Cuarto.objects.filter(
-            hospital=hosp
-        ).values_list('especialidad_id', flat=True).distinct()
-        
+        especialidades_vivas_ids = Cuarto.objects.filter(hospital=hosp).values_list('especialidad_id', flat=True).distinct()
         especialidades_vivas = Especialidad.objects.filter(id__in=especialidades_vivas_ids)
 
         for esp in especialidades_vivas:
-            # Buscamos camas para esta especialidad específica en este hospital
             c_esp = Cama.objects.filter(cuarto__especialidad=esp, cuarto__hospital=hosp)
             t_e = c_esp.count()
             o_e = c_esp.filter(estado='OCUPADO').count()
             l_e = c_esp.filter(estado='LIBRE').count()
-            
             p_e = (o_e / t_e * 100) if t_e > 0 else 0
             
-            # Determinamos el color basado en la carga
-            if t_e == 0:
-                color_e = "secondary" # Gris si no hay camas aún
-                estado_txt_e = "SIN CAMAS"
-            else:
-                color_e = "success" if p_e < 60 else ("warning" if p_e < 85 else "danger")
-                estado_txt_e = f"{round(p_e, 1)}%"
+            color_e = "secondary" if t_e == 0 else ("success" if p_e < 60 else ("warning" if p_e < 85 else "danger"))
+            estado_txt_e = "SIN CAMAS" if t_e == 0 else f"{round(p_e, 1)}%"
 
             detalles_esp.append({
                 'nombre': esp.nombre,
@@ -205,12 +198,8 @@ def dashboard_superadmin(request):
             'pacientes': Paciente.objects.filter(hospital=hosp, estado='INTERNADO').count(),
             'libres': c_libres,
             'ocupadas': c_ocupadas,
-            'reservadas': c_reservadas,
-            'limpieza': c_limpieza,
-            'mantenimiento': c_mantenimiento,
             'total_camas': c_total,
             'porcentaje_gral': round(porcentaje_hosp, 1),
-            'es_critico': h_critico,
             'semaforo_color': h_color,
             'estado_texto': h_estado,
             'especialidades_list': detalles_esp,
@@ -219,6 +208,9 @@ def dashboard_superadmin(request):
             'h_admin': h_admin,
             'h_limpieza': h_limpieza
         })
+
+    # --- CÁLCULO FINAL DE CARGA TOTAL ---
+    g_porcentaje_carga = round((g_total_ocupadas / g_total_camas * 100), 1) if g_total_camas > 0 else 0
 
     context = {
         'resumen_hospitales': resumen_hospitales,
@@ -230,12 +222,13 @@ def dashboard_superadmin(request):
             'hosp_criticos': hosp_criticos_count,
             'h_3er': h_3er_nivel,
             'h_2do': h_2do_nivel,
-            'porcentaje': round((g_total_ocupadas / g_total_camas * 100), 1) if g_total_camas > 0 else 0,
+            'porcentaje': g_porcentaje_carga,
         },
         'personal_global': {
             'doctores': doctores_totales,
             'enfermeras': enfermeras_totales,
             'administrativos': administrativos_totales,
+            'limpieza': limpieza_totales,
         },
         'nombre_admin': request.user.username,
     }
@@ -330,10 +323,7 @@ def eliminar_hospital(request, pk):
 def listar_usuarios(request):
     user = request.user
     q = request.GET.get('q')
-    if q:
-        usuarios_tabla = usuarios_tabla.filter(
-        Q(nombre_completo__icontains=q) | Q(email__icontains=q)
-    )
+    
     # Filtro de pertenencia: Si no es superadmin total, solo ve su hospital
     if es_superadmin(user) and user.username == 'admin2':
         todos_los_usuarios = Usuario.objects.all()
@@ -350,7 +340,10 @@ def listar_usuarios(request):
     # Filtro de estado por GET
     estado_filtro = request.GET.get('estado')
     usuarios_tabla = todos_los_usuarios.select_related('hospital', 'especialidad', 'rol')
-
+    if q:
+        usuarios_tabla = usuarios_tabla.filter(
+        Q(nombre_completo__icontains=q) | Q(email__icontains=q)
+    )
     if estado_filtro == 'disponible':
         usuarios_tabla = usuarios_tabla.filter(estado=True)
     elif estado_filtro == 'ocupado':

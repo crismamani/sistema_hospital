@@ -8,7 +8,7 @@ from django.db.models import Count, Q, ExpressionWrapper, FloatField
 from django.utils import timezone
 from django.urls import reverse
 from django.db import transaction
-from datetime import datetime
+from datetime import datetime, date
 from .decorators import solo_roles 
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
@@ -145,7 +145,8 @@ def gestionar_infraestructura(request):
 @solo_personal_autorizado
 def crear_especialidad(request):
     if request.method == 'POST':
-        nombre_esp = request.POST.get('nombre')
+        # Guardamos en minúsculas como pediste
+        nombre_esp = request.POST.get('nombre', '').lower().strip()
         hospital_id = request.POST.get('hospital_id')
         piso_form = request.POST.get('piso', 1)
         numero_cuarto = request.POST.get('numero_cuarto') 
@@ -157,9 +158,9 @@ def crear_especialidad(request):
         if nombre_esp and hospital_id:
             hospital = get_object_or_404(Hospital, id=hospital_id)
             
-            esp, created = Especialidad.objects.get_or_create(
-                nombre=nombre_esp.upper().strip()
-            )
+            # get_or_create con el nombre en minúsculas
+            esp, created = Especialidad.objects.get_or_create(nombre=nombre_esp)
+            
             cuarto_existe = Cuarto.objects.filter(hospital=hospital, especialidad=esp).exists()
             
             if not cuarto_existe:
@@ -172,16 +173,57 @@ def crear_especialidad(request):
                     )
                     messages.success(request, f"Especialidad '{nombre_esp}' registrada con éxito.")
                 except IntegrityError:
-                    # Ahora que IntegrityError está importado, esto funcionará perfecto
-                    messages.error(request, f"Error: El número de cuarto {numero_cuarto} ya existe en este hospital.")
+                    messages.error(request, f"Error: El número de cuarto {numero_cuarto} ya existe.")
                 except Exception as e:
                     messages.error(request, f"Error inesperado: {e}")
             else:
-                messages.info(request, f"La especialidad '{nombre_esp}' ya está configurada para este hospital.")
+                messages.info(request, f"La especialidad '{nombre_esp}' ya está configurada.")
         
         return redirect(f"/hospital/infraestructura/?hospital_id={hospital_id}")
     return redirect('superadmin:hospitales')
 
+@login_required
+@solo_personal_autorizado
+def editar_especialidad(request, especialidad_id):
+    if request.method == 'POST':
+        hospital_id = request.POST.get('hospital_id')
+        nuevo_nombre = request.POST.get('nombre', '').lower().strip()
+        nuevo_piso = request.POST.get('piso')
+        
+        especialidad = get_object_or_404(Especialidad, id=especialidad_id)
+        
+        try:
+            # Actualizamos el nombre de la especialidad (afecta a todos los hospitales que la usen)
+            especialidad.nombre = nuevo_nombre
+            especialidad.save()
+            
+            # Si pasaste el piso, actualizamos el Cuarto base vinculado a este hospital
+            if hospital_id and nuevo_piso:
+                Cuarto.objects.filter(hospital_id=hospital_id, especialidad=especialidad).update(piso=nuevo_piso)
+                
+            messages.success(request, "Especialidad actualizada correctamente.")
+        except Exception as e:
+            messages.error(request, f"Error al actualizar: {e}")
+            
+        return redirect(f"/hospital/infraestructura/?hospital_id={hospital_id}")
+    return redirect('superadmin:hospitales')
+
+@login_required
+@solo_personal_autorizado
+def eliminar_especialidad(request, especialidad_id):
+    if request.method == 'POST':
+        hospital_id = request.POST.get('hospital_id')
+        # Buscamos el cuarto que vincula esta especialidad con este hospital específico
+        venculo_cuarto = Cuarto.objects.filter(hospital_id=hospital_id, especialidad_id=especialidad_id)
+        
+        if venculo_cuarto.exists():
+            venculo_cuarto.delete()
+            messages.success(request, "La especialidad ha sido desvinculada de este hospital.")
+        else:
+            messages.error(request, "No se encontró la especialidad para eliminar.")
+            
+        return redirect(f"/hospital/infraestructura/?hospital_id={hospital_id}")
+    return redirect('superadmin:hospitales')
 @login_required
 @solo_personal_autorizado
 def detalle_camas_especialidad(request, hospital_id, especialidad_id):
@@ -292,25 +334,48 @@ def lista_pacientes(request):
 @login_required
 @solo_personal_autorizado
 def historial_paciente(request, paciente_id):
+    # 1. Obtenemos los datos base
     paciente = get_object_or_404(Paciente, id=paciente_id)
     evoluciones = paciente.evoluciones.all().order_by('-fecha_registro')
     
+    # 2. Lógica de cálculo de días (Dentro de la función)
+    dias_internado = 0
+    fecha_referencia = getattr(paciente, 'fecha_registro', None) or getattr(paciente, 'fecha_ingreso', None)
+    
+    if fecha_referencia:
+        dias_internado = (date.today() - fecha_referencia.date()).days
+    else:
+        dias_internado = 0
+
+    # 3. Manejo de formularios (POST)
     if request.method == 'POST':
+        # Caso: Asignación de médico
+        if 'asignarme_caso' in request.POST:
+            paciente.medico_asignado = request.user
+            paciente.save()
+            messages.success(request, f"Te has asignado el caso de {paciente.nombre_completo}")
+            return redirect('hospital:historial_paciente', paciente_id=paciente.id)
+
+        # Caso: Nueva Evolución Médica
         form = EvolucionMedicaForm(request.POST)
         if form.is_valid():
             evolucion = form.save(commit=False)
             evolucion.paciente = paciente
-            evolucion.creado_by = request.user
+            evolucion.creado_por = request.user # Asegúrate que el campo sea creado_por o creado_by según tu modelo
             evolucion.save()
             messages.success(request, "Evolución médica actualizada.")
             return redirect('hospital:historial_paciente', paciente_id=paciente.id)
+    
+    # 4. GET: Carga inicial de la página
     else:
         form = EvolucionMedicaForm()
         
+    # 5. Respuesta final (Siempre al final de la función)
     return render(request, 'hospital/historial_paciente.html', {
         'paciente': paciente,
         'evoluciones': evoluciones,
-        'form': form
+        'form': form,
+        'dias_internado': dias_internado
     })
 @login_required
 def internar_paciente(request):

@@ -8,7 +8,7 @@ from django.contrib.auth.models import User
 class Cuarto(models.Model):
     hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE, related_name='cuartos')
     especialidad = models.ForeignKey(Especialidad, on_delete=models.CASCADE, related_name='cuartos')
-    numero_cuarto = models.CharField(max_length=10, verbose_name="Nro de Cuarto")
+    numero_cuarto = models.CharField(max_length=50, verbose_name="Nro de Cuarto")
     piso = models.CharField(max_length=50)
     
     class Meta:

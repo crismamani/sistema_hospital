@@ -25,28 +25,37 @@
 
     <div class="row g-3 mb-4 text-center">
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm p-3" style="border-radius: 15px; border-bottom: 4px solid #0d6efd !important;">
-                <p class="text-muted small fw-bold mb-1 text-uppercase">Total Personal</p>
-                <h2 class="fw-bold m-0">{{ activos_count|add:cirugia_count }}</h2>
-            </div>
+            <a href="?" class="text-decoration-none">
+                <div class="card border-0 shadow-sm p-3" style="border-radius: 15px; border-bottom: 4px solid #0d6efd !important; cursor: pointer;">
+                    <p class="text-muted small fw-bold mb-1 text-uppercase">Total Personal</p>
+                    <h2 class="fw-bold m-0">{{ activos_count|add:cirugia_count }}</h2>
+                </div>
+            </a>
         </div>
+    
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm p-3" style="border-radius: 15px; border-bottom: 4px solid #198754 !important;">
-                <p class="text-muted small fw-bold mb-1 text-uppercase">En Servicio</p>
-                <h2 class="fw-bold m-0 text-success">{{ activos_count }}</h2>
-            </div>
+            <a href="?estado=disponible" class="text-decoration-none">
+                <div class="card border-0 shadow-sm p-3" style="border-radius: 15px; border-bottom: 4px solid #198754 !important; cursor: pointer;">
+                    <p class="text-muted small fw-bold mb-1 text-uppercase text-success">En Servicio</p>
+                    <h2 class="fw-bold m-0 text-success">{{ activos_count }}</h2>
+                </div>
+            </a>
         </div>
+    
         <div class="col-md-3">
             <div class="card border-0 shadow-sm p-3" style="border-radius: 15px; border-bottom: 4px solid #0dcaf0 !important;">
-                <p class="text-muted small fw-bold mb-1 text-uppercase">Sedes</p>
+                <p class="text-muted small fw-bold mb-1 text-uppercase text-info">Sedes</p>
                 <h2 class="fw-bold m-0 text-info">{{ sedes_count }}</h2>
             </div>
         </div>
+    
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm p-3" style="border-radius: 15px; border-bottom: 4px solid #dc3545 !important;">
-                <p class="text-muted small fw-bold mb-1 text-uppercase">En Cirugía</p>
-                <h2 class="fw-bold m-0 text-danger">{{ cirugia_count }}</h2>
-            </div>
+            <a href="?estado=ocupado" class="text-decoration-none">
+                <div class="card border-0 shadow-sm p-3" style="border-radius: 15px; border-bottom: 4px solid #dc3545 !important; cursor: pointer;">
+                    <p class="text-muted small fw-bold mb-1 text-uppercase text-danger">En Cirugía</p>
+                    <h2 class="fw-bold m-0 text-danger">{{ cirugia_count }}</h2>
+                </div>
+            </a>
         </div>
     </div>
 

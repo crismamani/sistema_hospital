@@ -14,12 +14,12 @@
   /* CONTROLES */
   .controles {
     display: flex;
-    gap: 12px;
+    gap: 11px;
     align-items: center;
     background: #fff;
-    padding: 8px 14px;
+    padding: 8px 12px;
     border-radius: 6px;
-    margin-bottom: 14px;
+    margin-bottom: 12px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.15);
     flex-wrap: wrap;
     font-family: Arial, sans-serif;
@@ -66,7 +66,7 @@
 
   h1.titulo {
     font-size: 14pt;
-    font-weight: 700;
+    font-weight: 600;
     text-transform: uppercase;
     text-align: center;
     padding: 3px;
@@ -81,7 +81,7 @@
   .sec-hdr {
     background: #000;
     color: #fff;
-    font-weight: 700;
+    font-weight: 600;
     font-size: 9pt;
     padding: 1px 4px;
     text-align: center;
@@ -95,7 +95,7 @@
     display: flex;
     align-items: stretch;
     border-bottom: 1px solid #ccc;
-    min-height: 14px;
+    min-height: 12px;
   }
   .row:last-child { border-bottom: none; }
 
@@ -110,7 +110,7 @@
 
   .lbl {
     font-size: 8pt;
-    font-weight: 700;
+    font-weight: 600;
     white-space: nowrap;
     margin-right: 2px;
     color: #222;
@@ -168,10 +168,10 @@
     min-height: 13px;
   }
   .diag-row:last-child { border-bottom: none; }
-  .diag-lbl { font-size: 6.5pt; font-weight: 700; width: 12px; flex-shrink: 0; }
+  .diag-lbl { font-size: 6.5pt; font-weight: 600; width: 12px; flex-shrink: 0; }
   .diag-inp { flex: 1; border: none; border-bottom: 1px solid #999; font-size: 6pt; font-family: Arial, sans-serif; outline: none; background: transparent; }
   .cie-g { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
-  .cie-g span { font-size: 6pt; font-weight: 700; white-space: nowrap; }
+  .cie-g span { font-size: 6pt; font-weight: 600; white-space: nowrap; }
   .cie-g input { width: 42px; font-size: 6pt; border: none; border-bottom: 1px solid #999; outline: none; font-family: Arial, sans-serif; background: transparent; }
 
   /* TEXTAREA SECTION */
@@ -183,13 +183,13 @@
   .firmas-row {
     display: flex;
     gap: 10px;
-    padding: 30px 4px 10px;
+    padding: 25px 4px 10px;
     justify-content: space-between;
   }
   .firma-box {
     flex: 1;
     text-align: center;
-    font-size: 6.5pt;
+    font-size: 6pt;
     font-weight: 600;
     border-top: 1px solid #333;
     padding-top: 2px;
@@ -198,7 +198,7 @@
   .recuerde {
   background: #f5f5f5;
   border: 1px solid #bbb;
-  padding: 4px 8px;
+  padding: 4px 7px;
   font-size: 6pt; /* Un poquito más legible */
   line-height: 1.2;
   margin-top: 10px; /* Espacio antes del texto final */
@@ -206,8 +206,8 @@
 
 @media print {
   @page { 
-    size: auto;
-    margin: 0; /* Esto es vital para que el navegador no meta sus propios datos */
+    size: auto; 
+    margin: 0mm; /* Obligatorio en 0 para evitar la 2da hoja */
   }
 
   body { 
@@ -225,9 +225,14 @@
   .page { 
     box-shadow: none !important; 
     transform: scale(1) !important; 
-    /* Margen: Arriba 1cm, Derecha 1cm, Abajo 1cm, Izquierda 2cm (para dar el centímetro extra que pediste) */
-    margin: 1cm 1cm 1cm 2cm !important; 
+    /* Cambiamos margin por padding y reducimos a 0.5cm para que no empuje hacia afuera */
+    margin: 0 !important; 
+    padding: 0.5cm !important; 
+    width: 100% !important;
+    height: 100% !important;
   }
+
+  .controles, .no-print { display: none !important; }
 /* Quita la flechita de Select2 para que parezca un input de texto normal */
 .select2-container--default .select2-selection--single .select2-selection__arrow {
     display: none !important;
@@ -236,7 +241,7 @@
   .select2-container--default .select2-selection--single {
     border: 1px solid #000 !important; /* Borde negro como el resto del formulario */
     border-radius: 0px !important;
-    height: 24px !important; 
+    height: 22px !important; 
     display: flex !important;
     align-items: center !important;
   }
@@ -247,7 +252,7 @@
     padding-left: 5px !important;
     font-size: 13px !important;
   }
-  .controles, .no-print { display: none !important; }
+  
 }
 </style>
 </head>
@@ -362,7 +367,7 @@
       <!-- C6 -->
       <div class="sec">
         <div class="sec-hdr">EVOLUCION, COMPLICACIONES: (C6)</div>
-        <div class="ta-sec"><textarea id="ta_c6" rows="4"></textarea></div>
+        <div class="ta-sec"><textarea id="ta_c6" rows="3"></textarea></div>
       </div>
 
       <!-- C7 -->
@@ -462,7 +467,7 @@
 
 <script>
     // Configuración para tamaño OFICIO (Legal)
-    const size = { w: 216, h: 355 }; // Bajamos 1mm para margen de seguridad
+    const size = { w: 210, h: 297 }; // Bajamos 1mm para margen de seguridad
     let currentZoom = 100; // En impresión usaremos 100% real
   
     function mmToPx(mm) { return mm * 3.7795275591; }
@@ -474,13 +479,13 @@
       const hPx = mmToPx(size.h);
   
       page.style.width = wPx + 'px';
-      page.style.height = hPx + 'px';
+      //page.style.height = hPx + 'px';
       
       // Reducimos padding interno para ganar espacio vertical
       const padPx = mmToPx(4);
       inner.style.padding = padPx + 'px';
       inner.style.width = wPx + 'px';
-      inner.style.height = hPx + 'px'; // Forzamos altura interna
+      //inner.style.height = hPx + 'px'; // Forzamos altura interna
       inner.style.overflow = "hidden";
       applyZoom();
     }

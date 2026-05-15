@@ -1,6 +1,7 @@
 {% extends 'superadmi/base.html' %}
 {% block content %}
 <style>
+  /* --- RESET GENERAL --- */
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
@@ -11,16 +12,33 @@
     color: #111;
   }
 
+  /* --- VISTA EN PANTALLA --- */
   .page {
     background: #fff;
-    width: 216mm; /* Tamaño Oficio/Legal */
+    width: 210mm; 
     margin: 0 auto;
-    padding: 5mm; /* Reducido para ganar espacio interno */
+    padding: 8mm;
     border: 1px solid #999;
     box-shadow: 0 2px 10px rgba(0,0,0,0.2);
     position: relative;
+    overflow: hidden;
   }
 
+  /* --- BOTÓN IMPRIMIR --- */
+  .no-print {
+    background: #1a1a1a;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-bottom: 10px;
+    font-weight: bold;
+    display: inline-block;
+  }
+  .no-print:hover { background: #444; }
+
+  /* --- ESTRUCTURA DEL FORMULARIO --- */
   h1.titulo {
     font-size: 13px;
     font-weight: 700;
@@ -28,33 +46,35 @@
     border: 2px solid #000;
     padding: 4px 6px;
     margin-bottom: 2px;
-    letter-spacing: 0.5px;
+    text-align: center;
   }
-  .seccion { border: 1px solid #000; margin-bottom: 2px; }
-  .seccion-header { background: #000; color: #fff; font-weight: 700; font-size: 9.5px; padding: 2px 5px; text-transform: uppercase; }
-  .seccion-body { padding: 2px 5px; }
+
+  .seccion { border: 1px solid #000; margin-bottom: 1px; } /* Reducido margen */
+  
   .seccion-header {
     background: #000;
     color: #fff;
     font-weight: 700;
-    font-size: 10px;
+    font-size: 9px;
     padding: 2px 5px;
     text-transform: uppercase;
-    letter-spacing: 0.3px;
   }
 
-  .seccion-body {
-    padding: 3px 5px;
-  }
+  .seccion-body { padding: 2px 5px; }
 
-  .fila { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 0; margin-bottom: 1px; border-bottom: 1px dotted #ccc; }
+  .fila { 
+    display: flex; 
+    align-items: center; 
+    flex-wrap: wrap; 
+    margin-bottom: 0px; 
+    border-bottom: 1px dotted #ccc; 
+  }
   .fila:last-child { border-bottom: none; }
 
   .campo {
     display: flex;
     align-items: center;
     flex: 1;
-    min-width: 80px;
     padding: 1px 3px;
     border-right: 1px solid #ddd;
   }
@@ -64,267 +84,107 @@
     white-space: nowrap;
     font-weight: 600;
     margin-right: 3px;
-    font-size: 9.5px;
-    color: #333;
+    font-size: 9px;
   }
 
-  input[type="text"], input[type="date"], input[type="time"], select, textarea {
+  input[type="text"], input[type="date"], input[type="time"], select {
     border: none;
-    border-bottom: 1px solid #555;
+    border-bottom: 1px solid #777;
     outline: none;
-    font-family: inherit;
-    font-size: 9.5px;
-    flex: 1;
-    min-width: 30px;
+    font-size: 9px;
     background: transparent;
     padding: 0 2px;
-    line-height: 1.4;
   }
 
   textarea {
     border: 1px solid #aaa;
     width: 100%;
-    min-height: 22px; /* Reducido para que todo quepa en una hoja */
-    font-size: 9px;
-    padding: 2px;
+    min-height: 14px; /* Altura mínima para que no empuje */
+    font-size: 8.5px;
+    padding: 1px;
     line-height: 1.1;
+    resize: none;
   }
 
-  .sello-box {
-    border: 1px solid #999;
-    min-width: 90px;
-    min-height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 8px;
-    color: #888;
-    text-align: center;
-    padding: 3px;
-    font-style: italic;
-  }
+  /* --- TABLAS Y COMPONENTES --- */
+  table.examenes { width: 100%; border-collapse: collapse; font-size: 9px; }
+  table.examenes th { background: #ddd; border: 1px solid #999; padding: 2px; }
+  table.examenes td { border: 1px solid #bbb; padding: 1px 3px; }
 
-  .radio-group { display: flex; gap: 6px; align-items: center; }
-  .radio-group label { font-weight: 400; }
-  .radio-group input { width: auto; }
-
-  /* TABLA EXÁMENES */
-  table.examenes {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 9.5px;
-  }
-  table.examenes th {
-    background: #ddd;
-    border: 1px solid #999;
-    padding: 2px 4px;
-    text-align: left;
-    font-weight: 600;
-  }
-  table.examenes td {
-    border: 1px solid #bbb;
-    padding: 2px 4px;
-  }
-  table.examenes td input { width: 100%; }
-
-  /* DIAGNÓSTICOS */
-  .diag-row {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    margin-bottom: 2px;
-  }
-  .diag-row label { min-width: 14px; font-weight: 700; }
-  .diag-row input.diag-desc { flex: 1; }
-  .diag-row .cie { display: flex; align-items: center; gap: 2px; }
-  .diag-row .cie input { width: 50px; }
-
-  /* CONSENTIMIENTO */
-  .consentimiento-texto {
-    font-size: 9px;
-    line-height: 1.5;
-    border: 1px solid #bbb;
-    padding: 5px;
-    color: #444;
-  }
-  .consentimiento-texto input {
-    display: inline;
-    width: 80px;
-    font-size: 9px;
-  }
-
-  /* FIRMAS */
-  .firmas {
-    display: flex;
-    gap: 6px;
-    margin-top: 4px;
-  }
+  .diag-row { display: flex; align-items: center; gap: 4px; margin-bottom: 1px; }
+  
   .firma-box {
     flex: 1;
     border-top: 1px solid #333;
+    margin-top: 25px; /* Espacio para la firma */
     padding-top: 2px;
-    font-size: 9px;
+    font-size: 8px;
     text-align: center;
   }
 
-  /* MOTIVO */
-  .motivo-row {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    align-items: center;
-    padding: 3px 5px;
-  }
-  .motivo-item { display: flex; align-items: center; gap: 3px; }
-  .motivo-item input[type="text"] { width: 35px; }
-
-  /* SUBSECTOR */
-  .subsector {
-    display: flex;
-    gap: 0;
-    border: 1px solid #999;
-    overflow: hidden;
-  }
-  .subsector span {
-    padding: 1px 6px;
-    border-right: 1px solid #999;
-    font-size: 9px;
-    cursor: pointer;
-    user-select: none;
-  }
-  .subsector span:last-child { border-right: none; }
-  .subsector input[type="radio"] { display: none; }
-  .subsector span:has(+ input:checked),
-  .sub-label.active { background: #333; color: #fff; }
-
-  /* CALIFICACIÓN */
-  .calificacion {
-    display: flex;
-    border: 1px solid #999;
-    overflow: hidden;
-  }
-  .calificacion div {
-    flex: 1;
-    text-align: center;
-    border-right: 1px solid #999;
-    padding: 2px;
-    font-size: 9px;
-  }
-  .calificacion div:last-child { border-right: none; }
-  .calificacion .header { background: #ddd; font-weight: 700; }
-
-  /* RECUERDE */
   .recuerde {
     background: #f5f5f5;
     border: 1px solid #bbb;
-    padding: 4px 6px;
-    font-size: 8.5px;
-    margin-top: 4px;
-    line-height: 1.6;
+    padding: 3px 5px;
+    font-size: 7.5px;
+    margin-top: 3px;
   }
-  .recuerde strong { font-weight: 700; }
 
+  /* --- SELECT2 FIX --- */
+  .select2-container--default .select2-selection--single {
+    border: none !important;
+    border-bottom: 1px solid #777 !important;
+    height: 18px !important;
+    font-size: 9px !important;
+  }
+  .select2-selection__arrow { display: none !important; }
+
+  /* --- LA MAGIA DE LA IMPRESIÓN (UNA SOLA HOJA) --- */
+  @media print {
+    @page { 
+      size: legal; /* Usamos legal para darte más margen vertical */
+      margin: 0; 
+    }
+
+    /* Ocultar TODO lo que no sea el formulario */
+    nav, aside, header, footer, .sidebar, .main-header, 
+    .navbar, .no-print, .panel-control, .main-sidebar,
+    [class*="sidebar"], [class*="nav"], .btn, .buttons { 
+      display: none !important; 
+    }
+
+    body, html { 
+      background: white !important; 
+      margin: 0 !important; 
+      padding: 0 !important;
+    }
+
+    .page {
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      margin: 0 !important;
+      padding: 5mm 10mm 5mm 15mm !important; /* Margen para archivador */
+      border: none !important;
+      box-shadow: none !important;
+      /* ESCALA CLAVE: Si aún sale 2da hoja, baja esto a 0.88 */
+      transform: scale(0.92); 
+      transform-origin: top left;
+    }
+
+    /* Ajustes de compactación extrema para impresión */
+    .seccion { margin-bottom: 0px !important; }
+    .seccion-body { padding: 1px 4px !important; }
+    .fila { border-bottom: 1px solid #eee !important; }
+    .recuerde { font-size: 7px !important; line-height: 1 !important; }
+  }
+
+  /* Clases de ancho */
   .full { flex: 1 1 100%; }
   .w50 { flex: 0 0 50%; }
   .w33 { flex: 0 0 33.3%; }
   .w25 { flex: 0 0 25%; }
-  .w20 { flex: 0 0 20%; }
-  .w15 { flex: 0 0 15%; }
-  .w10 { flex: 0 0 10%; }
-
-  @media print {
-  /* 1. ELIMINAR ENCABEZADOS Y PIES DE PÁGINA DEL NAVEGADOR */
-  @page { 
-    size: legal; 
-    margin: 0; 
-  }
-
-  /* 2. OCULTAR TODO EL CONTENIDO DEL SISTEMA (DASHBOARD) */
-  /* He añadido selectores específicos que se ven en tus capturas de pantalla */
-  nav, 
-  aside, 
-  header,
-  footer,
-  .sidebar, 
-  .main-header, 
-  .navbar, 
-  .no-print,
-  .panel-control,
-  .main-sidebar, /* Clase común en plantillas de administración */
-  [class*="sidebar"], /* Oculta cualquier cosa que tenga 'sidebar' en el nombre */
-  [class*="nav"],     /* Oculta cualquier cosa que tenga 'nav' en el nombre */
-  .btn, .buttons { 
-    display: none !important; 
-    width: 0 !important;
-    height: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    position: absolute !important;
-    visibility: hidden !important;
-  }
-
-  /* 3. LIMPIAR EL CUERPO Y EL CONTENEDOR PRINCIPAL */
-  /* Esto obliga al contenedor de Django a ignorar sus propios márgenes y paddings */
-  body, 
-  html, 
-  .content-wrapper, 
-  .wrapper, 
-  #wrapper, 
-  main { 
-    background: white !important; 
-    margin: 0 !important; 
-    padding: 0 !important;
-    border: none !important;
-    display: block !important;
-    width: 100% !important;
-  }
-/* 1. Hace que el cuadrito se comporte como un campo de texto */
-.select2-container--default .select2-selection--single {
-        border: none !important;
-        background: transparent !important;
-        height: 20px !important;
-        display: flex !important;
-        align-items: center !important;
-        cursor: text !important; /* Indica al navegador que se puede escribir */
-    }
-
-    /* 2. Quita la flechita de la derecha que quita espacio y bloquea clics */
-    .select2-selection__arrow {
-        display: none !important;
-    }
-
-    /* 3. Estilo del texto que escribes para que sea legible */
-    .select2-container--default .select2-selection--single .select2-selection__rendered {
-        font-size: 11px !important;
-        line-height: 20px !important;
-        padding-left: 5px !important;
-        color: #000 !important;
-    }
-
-    /* 4. Asegura que el buscador sea más grande que el cuadrito para ver los nombres */
-    .select2-dropdown {
-        min-width: 300px !important;
-        border: 1px solid #000 !important;
-        z-index: 9999;
-    }
-  /* 4. POSICIONAR EL FORMULARIO EN TODA LA HOJA */
-  .page { 
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    box-shadow: none !important; 
-    border: none !important;
-    width: 216mm !important;
-    /* MARGEN IZQUIERDO: 2.5cm (2cm base + 0.5cm extra para el archivador) */
-    margin: 0.8cm 0.8cm 0.8cm 2.5cm !important; 
-    padding: 0 !important;
-    transform: scale(0.95); /* Escala de seguridad para asegurar 1 sola hoja */
-    transform-origin: top left;
-    visibility: visible !important;
-    display: block !important;
-    page-break-after: avoid !important;
-  }
-}
 </style>
 </head>
 <body>
